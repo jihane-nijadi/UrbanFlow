@@ -1,8 +1,8 @@
 package com.example.ticket_service.messaging.consumer;
 
 import com.example.ticket_service.config.RabbitMQConfig;
-import com.example.ticket_service.domain.Ticket;
-import com.example.ticket_service.domain.TicketStatus;
+import com.example.ticket_service.entities.Ticket;
+import com.example.ticket_service.entities.TicketStatus;
 import com.example.ticket_service.messaging.event.PaymentCompletedEvent;
 import com.example.ticket_service.messaging.event.RouteCancelledEvent;
 import com.example.ticket_service.messaging.event.TicketCancelledEvent;

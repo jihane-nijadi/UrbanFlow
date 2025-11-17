@@ -1,6 +1,6 @@
 package com.example.ticket_service.dto;
 
-import com.example.ticket_service.domain.TicketStatus;
+import com.example.ticket_service.entities.TicketStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

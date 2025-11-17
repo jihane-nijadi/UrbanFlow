@@ -1,4 +1,4 @@
-package com.example.ticket_service.domain;
+package com.example.ticket_service.entities;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

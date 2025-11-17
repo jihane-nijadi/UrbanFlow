@@ -1,7 +1,7 @@
 package com.example.ticket_service.repository;
 
-import com.example.ticket_service.domain.Ticket;
-import com.example.ticket_service.domain.TicketStatus;
+import com.example.ticket_service.entities.Ticket;
+import com.example.ticket_service.entities.TicketStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

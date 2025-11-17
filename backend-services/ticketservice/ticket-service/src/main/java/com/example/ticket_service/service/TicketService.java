@@ -1,7 +1,7 @@
 package com.example.ticket_service.service;
 
-import com.example.ticket_service.domain.Ticket;
-import com.example.ticket_service.domain.TicketStatus;
+import com.example.ticket_service.entities.Ticket;
+import com.example.ticket_service.entities.TicketStatus;
 import com.example.ticket_service.dto.TicketRequest;
 import com.example.ticket_service.dto.TicketResponse;
 import com.example.ticket_service.exception.ResourceNotFoundException;

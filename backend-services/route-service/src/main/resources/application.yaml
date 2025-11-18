@@ -1,0 +1,23 @@
+server:
+  port: 8081  # Changed from 8083 to match Ticket Service expectation
+
+spring:
+  application:
+    name: route-service
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://route-db:5432/route_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:hello}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace

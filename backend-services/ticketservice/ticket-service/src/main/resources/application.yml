@@ -1,0 +1,24 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: ticket-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://ticket-db:5432/ticket_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:hello}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:rabbitmq}
+
+route:
+  service:
+    url: ${ROUTE_SERVICE_URL:http://route-service:8081}

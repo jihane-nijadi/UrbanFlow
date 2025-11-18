@@ -1,38 +1,31 @@
 package com.example.ticket_service.mapper;
 
 import com.example.ticket_service.entities.Ticket;
-import com.example.ticket_service.dto.TicketRequest;
 import com.example.ticket_service.dto.TicketResponse;
 import org.springframework.stereotype.Component;
 
 @Component
 public class TicketMapper {
 
-    public Ticket toEntity(TicketRequest request) {
-        return Ticket.builder()
-                .userId(request.getUserId())
-                .routeId(request.getRouteId())
-                .origin(request.getOrigin())
-                .destination(request.getDestination())
-                .departureTime(request.getDepartureTime())
-                .arrivalTime(request.getArrivalTime())
-                .price(request.getPrice())
-                .seatNumber(request.getSeatNumber())
-                .build();
-    }
+    /**
+     * Note: toEntity() method removed - tickets are now created directly in service
+     * with data fetched from Route Service, not mapped directly from request
+     */
 
     public TicketResponse toResponse(Ticket ticket) {
         return TicketResponse.builder()
                 .id(ticket.getId())
                 .userId(ticket.getUserId())
                 .routeId(ticket.getRouteId())
-                .origin(ticket.getOrigin())
-                .destination(ticket.getDestination())
+                .scheduleId(ticket.getScheduleId())
+                .routeName(ticket.getRouteName())
+                .departureStop(ticket.getDepartureStop())
+                .arrivalStop(ticket.getArrivalStop())
                 .departureTime(ticket.getDepartureTime())
                 .arrivalTime(ticket.getArrivalTime())
+                .travelDate(ticket.getTravelDate())
                 .price(ticket.getPrice())
                 .status(ticket.getStatus())
-                .seatNumber(ticket.getSeatNumber())
                 .purchaseDate(ticket.getPurchaseDate())
                 .validUntil(ticket.getValidUntil())
                 .qrCode(ticket.getQrCode())

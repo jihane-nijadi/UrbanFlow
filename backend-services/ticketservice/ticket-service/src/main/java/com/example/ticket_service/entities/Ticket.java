@@ -32,20 +32,29 @@ public class Ticket {
     @Column(nullable = false)
     private Long routeId;
 
-    @NotBlank(message = "Origin is required")
+    @NotNull(message = "Schedule ID is required")
     @Column(nullable = false)
-    private String origin;
+    private Long scheduleId;
 
-    @NotBlank(message = "Destination is required")
+    // Route information (fetched from Route Service)
     @Column(nullable = false)
-    private String destination;
+    private String routeName;
 
-    @NotNull(message = "Departure time is required")
     @Column(nullable = false)
-    private LocalDateTime departureTime;
+    private String departureStop;
 
-    @Column
-    private LocalDateTime arrivalTime;
+    @Column(nullable = false)
+    private String arrivalStop;
+
+    @Column(nullable = false)
+    private String departureTime;  // "08:00"
+
+    @Column(nullable = false)
+    private String arrivalTime;    // "08:25"
+
+    @NotNull(message = "Travel date is required")
+    @Column(nullable = false)
+    private LocalDateTime travelDate;
 
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be positive")
@@ -56,10 +65,6 @@ public class Ticket {
     @Column(nullable = false)
     @Builder.Default
     private TicketStatus status = TicketStatus.ACTIVE;
-
-    @NotBlank(message = "Seat number is required")
-    @Column(nullable = false)
-    private String seatNumber;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime purchaseDate;
@@ -73,8 +78,9 @@ public class Ticket {
     @PrePersist
     protected void onCreate() {
         purchaseDate = LocalDateTime.now();
-        if (validUntil == null && departureTime != null) {
-            validUntil = departureTime.plusHours(1);
+        // Set validUntil to travel date + 2 hours after departure
+        if (validUntil == null && travelDate != null) {
+            validUntil = travelDate.plusHours(2);
         }
     }
 }

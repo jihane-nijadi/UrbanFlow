@@ -17,13 +17,16 @@ public class TicketCreatedEvent {
     private Long ticketId;
     private String userId;
     private Long routeId;
-    private String origin;
-    private String destination;
-    private LocalDateTime departureTime;
-    private LocalDateTime arrivalTime;
+    private Long scheduleId;
+    private String routeName;
+    private String departureStop;
+    private String arrivalStop;
+    private String departureTime;
+    private String arrivalTime;
+    private LocalDateTime travelDate;
     private BigDecimal price;
-    private String seatNumber;
     private LocalDateTime purchaseDate;
+    @Builder.Default
     private String eventType = "TICKET_CREATED";
     private LocalDateTime eventTimestamp;
 }

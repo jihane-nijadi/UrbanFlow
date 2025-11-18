@@ -85,7 +85,6 @@ public class TicketEventConsumer {
                         .userId(ticket.getUserId())
                         .routeId(ticket.getRouteId())
                         .refundAmount(ticket.getPrice())
-                        .seatNumber(ticket.getSeatNumber())
                         .departureTime(ticket.getDepartureTime())
                         .cancellationReason("Route cancelled: " + event.getCancellationReason())
                         .eventTimestamp(LocalDateTime.now())

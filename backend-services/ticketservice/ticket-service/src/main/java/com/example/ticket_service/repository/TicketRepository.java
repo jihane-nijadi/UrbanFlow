@@ -22,11 +22,14 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     List<Ticket> findByRouteId(Long routeId);
 
+    List<Ticket> findByScheduleId(Long scheduleId);
+
     @Query("SELECT t FROM Ticket t WHERE t.status = :status AND t.validUntil < :now")
     List<Ticket> findExpiredTickets(@Param("status") TicketStatus status, @Param("now") LocalDateTime now);
 
-    @Query("SELECT t FROM Ticket t WHERE t.userId = :userId AND t.departureTime > :now ORDER BY t.departureTime ASC")
+    @Query("SELECT t FROM Ticket t WHERE t.userId = :userId AND t.travelDate > :now ORDER BY t.travelDate ASC")
     List<Ticket> findUpcomingTicketsByUserId(@Param("userId") String userId, @Param("now") LocalDateTime now);
 
-    boolean existsBySeatNumberAndRouteIdAndDepartureTime(String seatNumber, Long routeId, LocalDateTime departureTime);
+    // Count tickets for a specific schedule and travel date (for 70-seat limit)
+    long countByScheduleIdAndTravelDate(Long scheduleId, LocalDateTime travelDate);
 }

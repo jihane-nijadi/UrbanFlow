@@ -23,21 +23,13 @@ public class TicketRequest {
     @NotNull(message = "Route ID is required")
     private Long routeId;
 
-    @NotBlank(message = "Origin is required")
-    private String origin;
+    @NotNull(message = "Schedule ID is required")
+    private Long scheduleId;
 
-    @NotBlank(message = "Destination is required")
-    private String destination;
-
-    @NotNull(message = "Departure time is required")
-    private LocalDateTime departureTime;
-
-    private LocalDateTime arrivalTime;
+    @NotNull(message = "Travel date is required")
+    private LocalDateTime travelDate;
 
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be positive")
     private BigDecimal price;
-
-    @NotBlank(message = "Seat number is required")
-    private String seatNumber;
 }

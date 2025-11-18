@@ -19,7 +19,6 @@ public class RabbitMQConfig {
     // ============= QUEUES (Ticket Service Publishes To) =============
     public static final String PAYMENT_QUEUE = "payment.ticket.created";
     public static final String NOTIFICATION_QUEUE = "notification.ticket.events";
-    public static final String ANALYTICS_QUEUE = "analytics.ticket.events";
     public static final String REFUND_QUEUE = "refund.ticket.cancelled";
 
     // ============= QUEUES (Ticket Service Consumes From) =============
@@ -67,11 +66,6 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue analyticsQueue() {
-        return QueueBuilder.durable(ANALYTICS_QUEUE).build();
-    }
-
-    @Bean
     public Queue refundQueue() {
         return QueueBuilder.durable(REFUND_QUEUE).build();
     }
@@ -104,14 +98,6 @@ public class RabbitMQConfig {
                 .bind(notificationQueue())
                 .to(ticketExchange())
                 .with("ticket.*"); // All ticket events
-    }
-
-    @Bean
-    public Binding bindingAnalytics() {
-        return BindingBuilder
-                .bind(analyticsQueue())
-                .to(ticketExchange())
-                .with("ticket.*");
     }
 
     @Bean

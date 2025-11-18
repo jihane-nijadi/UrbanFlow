@@ -1,5 +1,7 @@
 package com.example.ticket_service.service;
 
+import com.example.ticket_service.dto.RouteDTO;
+import com.example.ticket_service.dto.ScheduleDTO;
 import com.example.ticket_service.entities.Ticket;
 import com.example.ticket_service.entities.TicketStatus;
 import com.example.ticket_service.dto.TicketRequest;
@@ -31,23 +33,50 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final TicketMapper ticketMapper;
     private final TicketEventPublisher eventPublisher;
+    private final RouteServiceClient routeServiceClient;
 
     @Transactional
     public TicketResponse createTicket(TicketRequest request) {
-        log.info("Creating ticket for user: {} on route: {}", request.getUserId(), request.getRouteId());
+        log.info("Creating ticket for user: {} on route: {}, schedule: {}", 
+                request.getUserId(), request.getRouteId(), request.getScheduleId());
 
-        // Check if seat is already booked
-        if (ticketRepository.existsBySeatNumberAndRouteIdAndDepartureTime(
-                request.getSeatNumber(), request.getRouteId(), request.getDepartureTime())) {
-            throw new SeatAlreadyBookedException(
-                    "Seat " + request.getSeatNumber() + " is already booked for this route");
+        // Fetch route and schedule information from Route Service
+        RouteDTO route = routeServiceClient.getRouteById(request.getRouteId());
+        ScheduleDTO schedule = routeServiceClient.getScheduleById(request.getScheduleId());
+
+        // Validate that schedule belongs to the route
+        if (!schedule.getRouteId().equals(route.getRouteId())) {
+            throw new IllegalArgumentException(
+                    "Schedule " + request.getScheduleId() + " does not belong to route " + request.getRouteId());
         }
 
-        Ticket ticket = ticketMapper.toEntity(request);
-        ticket.setQrCode(generateQRCode(ticket));
+        // Check seat availability (limit: 70 seats per schedule per date)
+        long bookedSeats = ticketRepository.countByScheduleIdAndTravelDate(
+                request.getScheduleId(), request.getTravelDate());
+        if (bookedSeats >= 70) {
+            throw new SeatAlreadyBookedException(
+                    "All seats are booked for this schedule on " + request.getTravelDate() + " (70/70 seats taken)");
+        }
+
+        // Create ticket with route and schedule information
+        Ticket ticket = Ticket.builder()
+                .userId(request.getUserId())
+                .routeId(request.getRouteId())
+                .scheduleId(request.getScheduleId())
+                .routeName(route.getRouteName())
+                .departureStop(schedule.getDepartureStop())
+                .arrivalStop(schedule.getArrivalStop())
+                .departureTime(schedule.getDepartureTime())
+                .arrivalTime(schedule.getArrivalTime())
+                .travelDate(request.getTravelDate())
+                .price(request.getPrice())
+                .status(TicketStatus.PENDING)
+                .qrCode(generateQRCode())
+                .build();
 
         Ticket savedTicket = ticketRepository.save(ticket);
-        log.info("Ticket created successfully with ID: {}", savedTicket.getId());
+        log.info("Ticket created successfully with ID: {} for route: {} ({})", 
+                savedTicket.getId(), route.getRouteName(), schedule.getDepartureStop() + " -> " + schedule.getArrivalStop());
 
         // Publish ticket created event to RabbitMQ
         publishTicketCreatedEvent(savedTicket);
@@ -147,7 +176,7 @@ public class TicketService {
         log.info("Expired {} tickets", expiredTickets.size());
     }
 
-    private String generateQRCode(Ticket ticket) {
+    private String generateQRCode() {
         // Generate a unique QR code identifier
         return UUID.randomUUID().toString();
     }
@@ -160,12 +189,14 @@ public class TicketService {
                     .ticketId(ticket.getId())
                     .userId(ticket.getUserId())
                     .routeId(ticket.getRouteId())
-                    .origin(ticket.getOrigin())
-                    .destination(ticket.getDestination())
+                    .scheduleId(ticket.getScheduleId())
+                    .routeName(ticket.getRouteName())
+                    .departureStop(ticket.getDepartureStop())
+                    .arrivalStop(ticket.getArrivalStop())
                     .departureTime(ticket.getDepartureTime())
                     .arrivalTime(ticket.getArrivalTime())
+                    .travelDate(ticket.getTravelDate())
                     .price(ticket.getPrice())
-                    .seatNumber(ticket.getSeatNumber())
                     .purchaseDate(ticket.getPurchaseDate())
                     .eventTimestamp(LocalDateTime.now())
                     .build();
@@ -183,9 +214,13 @@ public class TicketService {
                     .ticketId(ticket.getId())
                     .userId(ticket.getUserId())
                     .routeId(ticket.getRouteId())
-                    .refundAmount(ticket.getPrice())
-                    .seatNumber(ticket.getSeatNumber())
+                    .scheduleId(ticket.getScheduleId())
+                    .routeName(ticket.getRouteName())
+                    .departureStop(ticket.getDepartureStop())
+                    .arrivalStop(ticket.getArrivalStop())
                     .departureTime(ticket.getDepartureTime())
+                    .travelDate(ticket.getTravelDate().toLocalDate())
+                    .refundAmount(ticket.getPrice())
                     .cancellationReason(reason)
                     .eventTimestamp(LocalDateTime.now())
                     .build();
@@ -203,7 +238,11 @@ public class TicketService {
                     .ticketId(ticket.getId())
                     .userId(ticket.getUserId())
                     .routeId(ticket.getRouteId())
-                    .seatNumber(ticket.getSeatNumber())
+                    .scheduleId(ticket.getScheduleId())
+                    .routeName(ticket.getRouteName())
+                    .departureStop(ticket.getDepartureStop())
+                    .arrivalStop(ticket.getArrivalStop())
+                    .travelDate(ticket.getTravelDate().toLocalDate())
                     .usedAt(LocalDateTime.now())
                     .scanLocation("Gate Scan") // Could be enhanced with actual scan location
                     .eventTimestamp(LocalDateTime.now())

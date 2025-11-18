@@ -1,8 +1,28 @@
 import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import logo from "../../logo.png";
 import "../../styles/App.css";
 
 export default function Header() {
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    const hash = location.hash || "";
+    const pathname = location.pathname || "/";
+
+    const isHomeActive = pathname === "/" && (hash === "" || hash === "#" || !hash);
+    const isAboutActive = hash === "#about";
+    const isContactActive = hash === "#contact";
+
+    const goTo = (section) => {
+        if (!section) {
+            navigate("/");
+            return;
+        }
+        // navigate using hash so Home can react to it and scroll
+        navigate(`/#${section}`);
+    };
+
     return (
         <header className="nav-bar">
             <div className="nav-container">
@@ -12,9 +32,33 @@ export default function Header() {
                     <h1 className="nav-text">UrbanFlow</h1>
                 </div>
 
-                {/* RIGHT SIDE: reserved for buttons / actions */}
+                {/* RIGHT SIDE: buttons */}
                 <div className="nav-right">
-                    {/* future buttons */}
+                    <button
+                        className={`nav-link ${isHomeActive ? "active" : ""}`}
+                        onClick={() => goTo("")}
+                        aria-current={isHomeActive ? "page" : undefined}
+                    >
+                        Home
+                    </button>
+
+                    <button
+                        className={`nav-link ${isAboutActive ? "active" : ""}`}
+                        onClick={() => goTo("about")}
+                    >
+                        About
+                    </button>
+
+                    <button
+                        className={`nav-link ${isContactActive ? "active" : ""}`}
+                        onClick={() => goTo("contact")}
+                    >
+                        Contact
+                    </button>
+
+                    <Link to="/auth" className="primary-button nav-signin">
+                        Sign In
+                    </Link>
                 </div>
             </div>
         </header>

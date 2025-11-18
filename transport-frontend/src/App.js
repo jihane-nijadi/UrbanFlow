@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import AuthPage from "./pages/AuthPage";
+import Home from "./pages/Home";
+import SignInPage from "./pages/SignInPage";
+import SignUpPage from "./pages/SignUpPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import PassengerDashboard from "./pages/PassengerDashboard";
 import DriverDashboard from "./pages/DriverDashboard";
@@ -34,17 +36,10 @@ function App() {
         <Router>
             <Header />
             <Routes>
-                {/* Route publique pour login/signup */}
-                <Route
-                    path="/"
-                    element={
-                        !user ? (
-                            <AuthPage setUser={setUser} />
-                        ) : (
-                            <Navigate to={getRouteByRole(user.role)} replace />
-                        )
-                    }
-                />
+                {/* Public routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/auth" element={<SignInPage setUser={setUser} />} />
+                <Route path="/signup" element={<SignUpPage setUser={setUser} />} />
 
                 {/* Routes protégées */}
                 <Route

@@ -11,5 +11,15 @@
 <body>
 <noscript>You need to enable JavaScript to run this app.</noscript>
 <div id="root"></div>
+<!-- Temporary: ensure any previously-registered service workers are unregistered
+     so they don't continue serving stale cached assets during development. -->
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      regs.forEach(function(r) { r.unregister(); });
+    }).catch(function(){});
+    navigator.serviceWorker.getRegistration().then(function(r) { if (r) r.unregister(); }).catch(function(){});
+  }
+</script>
 </body>
 </html>

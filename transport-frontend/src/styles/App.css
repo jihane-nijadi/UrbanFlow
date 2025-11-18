@@ -408,12 +408,13 @@ body {
   top: 0;
   z-index: 999;
 }
+/* Section styling adjustments */
 .nav-container {
   display: flex;
   justify-content: space-between; /* left = logo, right = actions */
   align-items: center;
   gap: 1rem;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem; /* slightly reduced navbar height */
   max-width: 1200px;
   margin: 0 auto;
   background-color: inherit; /* inherit black from .nav-bar */
@@ -426,19 +427,236 @@ body {
 }
 
 .nav-logo {
-  width: 84px;
-  height: 84px;
+  width: 64px; /* reduced from 84px */
+  height: 64px;
   object-fit: contain;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #fff; /* logo background stays white */
   padding: 6px;
   margin: 0; /* remove centering */
+}
+
+/* Nav links (left of Sign In) */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Make nav buttons and Sign In share the same size & basic style */
+.nav-right .primary-button,
+.nav-link {
+  background: transparent;
+  color: #ffffff;
+  border: none;
+  padding: 0.6rem 1rem; /* uniform button size */
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  min-width: 96px;
+  text-align: center;
+}
+
+/* Ensure nav primary button (Sign In / Sign Up) uses same font-size as other nav links */
+.nav-right .primary-button {
+  font-size: 1rem; /* match nav-link */
+  padding: 0.6rem 1rem;
+  min-width: 96px;
+}
+
+.nav-right .primary-button:hover,
+.nav-link:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+/* Active state: slightly blurred orange-tinted background to indicate active section */
+.nav-link.active {
+  background: rgba(255,140,0,0.18);
+  color: #fff;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 6px 18px rgba(255,140,0,0.12);
+}
+
+/* Ensure Sign In keeps spacing */
+.nav-signin {
+  margin-left: 0.75rem;
 }
 
 .nav-text h1 {
   margin: 0;
   color: #ffffff; /* text stays white */
 }
+
+/* Home / hero */
+.home-page {
+  background: #ffffff;
+  color: #111827;
+}
+.hero {
+  background: linear-gradient(90deg, #000000 0%, #FF8C00 100%);
+  color: #fff;
+  padding: 2.8rem 0; /* slightly reduced padding */
+  min-height: 80vh; /* reduced hero height to bring About closer */
+  position: relative; /* for blurred overlay */
+  overflow: hidden;
+}
+.hero .hero-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+/* Constrained hero content, left margin and wrapping */
+.hero-content {
+  margin-left: 3.6rem; /* give the text a left offset */
+  max-width: 620px; /* don't let it stretch full width */
+  word-break: break-word;
+  white-space: normal;
+  position: relative;
+  z-index: 2;
+  margin-top: 1.1rem; /* lower the expression a bit from the navbar */
+}
+.hero-sub { color: rgba(255,255,255,0.9); margin-top: 0.75rem; }
+
+/* small CTA under the hero expression */
+.hero-arrow-wrap { margin-top: 0.8rem; }
+.hero-about-btn {
+  background: transparent;
+  color: #fff;
+  border: none;
+  font-weight: 800;
+  font-size: 1.12rem; /* slightly larger */
+  cursor: pointer;
+  padding: 0.9rem 1.3rem; /* bigger click target */
+  border-radius: 10px;
+  text-align: center;
+  min-width: 120px;
+}
+.hero-about-btn:hover { background: rgba(255,255,255,0.06); transform: translateY(-2px); }
+.hero-title {
+  font-size: 3rem; /* increased size */
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.05;
+}
+.hero-title .brand { display: block; margin-left: 0; }
+.hero-title .hero-title-rest { display: block; font-size: 1.6rem; font-weight: 700; margin-top: 0.1rem; margin-left: 0; }
+.hero-sub { color: rgba(255,255,255,0.9); margin-top: 0.75rem; }
+.merged-image {
+  width: 260px;
+  height: 260px;
+  border-radius: 18px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.18);
+}
+.merged-image.large { width: 320px; height: 320px; }
+.bus-emoji { font-size: 6rem; transform: translateX(-18px); }
+.ticket-emoji { font-size: 3.5rem; position: absolute; right: 18px; bottom: 14px; transform: rotate(-8deg); }
+
+/* Blurred background image overlay inside hero (keeps hr outside unaffected) */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center center;
+  filter: blur(8px);
+  transform: scale(1.03);
+  opacity: 0.28; /* subtle blur */
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero .hero-inner { position: relative; z-index: 2; }
+
+/* About / contact */
+.about .card, .contact .card { padding: 2rem; border-radius: 12px; }
+.about .card h2, .contact .card h2 { margin-bottom: 0.5rem; }
+.contact-mail { font-weight: 700; color: #FF8C00; }
+
+/* Section card tweaks for About/Contact */
+.section-card { padding: 1.2rem; text-align: center; }
+.section-title { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.6rem; }
+.section-body { max-width: 900px; margin: 0 auto; color: #374151; line-height: 1.6; }
+.section-card, .section-title, .section-body { font-style: italic; }
+/* Make About content-driven and sit closer beneath the hero */
+.about {
+  min-height: auto; /* let content dictate height so it sits naturally below hero */
+  display: block;
+  padding-top: 0.8rem;
+  padding-bottom: 0.4rem;
+}
+.about .section-card { width: 100%; }
+
+/* Contact sits directly below About with minimal padding */
+.contact {
+  padding: 0.4rem 0 0.8rem 0;
+  display: block;
+}
+.contact .section-card { width: 100%; }
+
+/* Visible thin separator line between hero and about */
+.section-separator-hr {
+  border: none;
+  border-top: 1px solid #e5e7eb; /* gray-200 */
+  width: 100%;
+  margin: 0;
+}
+
+/* Overrides: hero layout & CTA adjustments requested by user */
+.hero-content {
+  margin-left: 4.2rem !important;
+  max-width: 560px !important;
+  word-break: break-word;
+  white-space: normal;
+  position: relative;
+  z-index: 2;
+  margin-top: 2.2rem !important;
+  height: 50vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+}
+.hero-title {
+  font-size: 3.6rem !important;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.02;
+}
+.hero-title .brand { display: block; margin-left: 0; }
+.hero-title .hero-title-rest { display: block; font-size: 1.8rem; font-weight: 700; margin-top: 0.2rem; margin-left: 0; }
+.hero-about-btn {
+  background: rgba(255,140,0,0.12) !important; /* light orange */
+  color: #fff !important;
+  border: 1px solid rgba(255,140,0,0.22) !important;
+  font-weight: 800 !important;
+  font-size: 1.18rem !important;
+  cursor: pointer !important;
+  padding: 1rem 1.4rem !important;
+  border-radius: 10px !important;
+  text-align: center !important;
+  min-width: 140px !important;
+}
+.hero-about-btn:hover { background: rgba(255,140,0,0.18) !important; transform: translateY(-2px); }
+
+/* Auth pages two-column layout */
+.auth-layout { padding: 4rem 0; }
+.auth-two-col { display: flex; gap: 0; align-items: stretch; justify-content: center; }
+.auth-left, .auth-right { flex: 1; }
+.auth-left { padding-right: 0; }
+.auth-right { display:flex; align-items:center; justify-content:center; background: #fffaf6; }
+.illustration-box { padding: 3rem; }
+.auth-footer { margin-top: 1rem; text-align: left; }
+.underline-link { text-decoration: underline; color: #FF8C00; font-weight:700 }
+
+/* Ensure Login/Signup card styling fits the new layout */
+.auth-card { max-width: 520px; margin: 0 auto; }
+
 
 /* Responsive tweaks */
 @media (max-width: 960px) {

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Bus Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        .status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .status.connected { color: green; }
+        .status.disconnected { color: red; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="status" class="status disconnected">Disconnected</div>
+
+    <script>
+        // Initialize map (centered on San Francisco as example)
+        const map = L.map('map').setView([37.7749, -122.4194], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Store bus markers: busId -> marker
+        const busMarkers = new Map();
+        const statusEl = document.getElementById('status');
+
+        // Connect to real-time SSE stream
+        const eventSource = new EventSource('http://localhost:8091/api/realtime/stream');
+
+        eventSource.addEventListener('bus_updates', (event) => {
+            try {
+                const updates = JSON.parse(event.data);
+                statusEl.textContent = `Connected - ${updates.length} buses`;
+                statusEl.className = 'status connected';
+
+                // Update map with bus positions
+                updates.forEach(update => {
+                    const { busId, lat, lon, heading, speed, lineId } = update;
+
+                    if (busMarkers.has(busId)) {
+                        // Update existing marker
+                        const marker = busMarkers.get(busId);
+                        marker.setLatLng([lat, lon]);
+                        marker.setRotationAngle(heading || 0);
+                        marker.bindPopup(`Bus: ${busId}<br>Line: ${lineId || 'N/A'}<br>Speed: ${speed?.toFixed(1) || 0} km/h`);
+                    } else {
+                        // Create new marker with rotation
+                        const icon = L.divIcon({
+                            className: 'bus-marker',
+                            html: `<div style="transform: rotate(${heading || 0}deg); font-size: 20px;">🚌</div>`,
+                            iconSize: [30, 30],
+                            iconAnchor: [15, 15]
+                        });
+                        const marker = L.marker([lat, lon], { icon, rotationAngle: heading || 0 })
+                            .addTo(map)
+                            .bindPopup(`Bus: ${busId}<br>Line: ${lineId || 'N/A'}<br>Speed: ${speed?.toFixed(1) || 0} km/h`);
+                        busMarkers.set(busId, marker);
+                    }
+                });
+            } catch (e) {
+                console.error('Error parsing bus update:', e);
+            }
+        });
+
+        eventSource.onerror = (error) => {
+            statusEl.textContent = 'Disconnected';
+            statusEl.className = 'status disconnected';
+            console.error('SSE error:', error);
+        };
+
+        // Fetch initial bus positions
+        fetch('http://localhost:8091/api/buses')
+            .then(res => res.json())
+            .then(buses => {
+                buses.forEach(bus => {
+                    const { busId, lat, lon, heading, speed, lineId } = bus;
+                    const icon = L.divIcon({
+                        className: 'bus-marker',
+                        html: `<div style="transform: rotate(${heading || 0}deg); font-size: 20px;">🚌</div>`,
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
+                    });
+                    const marker = L.marker([lat, lon], { icon, rotationAngle: heading || 0 })
+                        .addTo(map)
+                        .bindPopup(`Bus: ${busId}<br>Line: ${lineId || 'N/A'}<br>Speed: ${speed?.toFixed(1) || 0} km/h`);
+                    busMarkers.set(busId, marker);
+                });
+            })
+            .catch(err => console.error('Error fetching initial buses:', err));
+    </script>
+</body>
+</html>
+
+
+

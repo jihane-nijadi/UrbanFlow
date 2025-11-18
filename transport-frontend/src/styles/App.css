@@ -75,26 +75,43 @@ body {
   justify-content: center;
 }
 
-.tabs {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  border-bottom: 2px solid #e0e0e0;
+.nav-bg {
+  /* Use the provided --nav-bg-image (set inline on the element) and
+     blend a dark gradient on top so the navbar reads as a blurred black band
+     while still showing the bus image behind it. Using the CSS variable
+     prevents webpack from trying to resolve the URL during build. */
+  position: absolute;
+  inset: 0; /* cover the full navbar area */
+  background-image: linear-gradient(180deg, rgba(0,0,0,0.85), rgba(0,0,0,0.6)), var(--nav-bg-image);
+  background-size: cover;
+  background-position: center center;
+  background-blend-mode: overlay;
+  filter: blur(19px) brightness(0.9);
+  transform: scale(1.02);
+  z-index: 0;
+  pointer-events: none;
 }
 
-.tab {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  border: none;
-  background: transparent;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #6b7280;
-  cursor: pointer;
-  border-bottom: 3px solid transparent;
-  transition: all 0.3s;
-  border-radius: 8px 8px 0 0;
-}
+  .tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #e0e0e0;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+    border-radius: 8px 8px 0 0;
+  }
 
 .tab.active {
   background-color: #FF8C00;
@@ -399,31 +416,44 @@ body {
   border-radius: 8px;
 }
 
-/* Simple black navbar with logo */
+/* Navbar: white background with dark text */
 .nav-bar {
-  background-color: #000000 !important; /* force black */
-  color: #ffffff;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+  /* Navbar sits flush at the top and uses a blurred background element */
+  background: transparent !important; /* no solid color, show blurred image only */
+  color: #111827;
   position: sticky;
-  top: 0;
-  z-index: 999;
+  top: 0; /* flush to top of the page */
+  z-index: 9999;
+  padding: 0.5rem 1rem; /* inner padding */
+  border-radius: 0 0 12px 12px; /* rounded bottom corners only */
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  overflow: hidden; /* clip background to navbar */
 }
+
+/* Blurred background image inside navbar using same hero image */
+/* Ensure nav content sits above any background and is interactive */
+.nav-container { position: relative; z-index: 2; }
+
+/* DOM background element for navbar is defined below (black blurred overlay). */
 /* Section styling adjustments */
 .nav-container {
   display: flex;
   justify-content: space-between; /* left = logo, right = actions */
   align-items: center;
-  gap: 1rem;
-  padding: 0.5rem 1rem; /* slightly reduced navbar height */
-  max-width: 1200px;
-  margin: 0 auto;
+  gap: 2rem; /* increased gap between left and right blocks */
+  padding: 0.75rem 24px; /* horizontal padding; left/right controlled here */
+  width: 100%;
+  max-width: none; /* make navbar stretch full viewport width */
+  margin: 0; /* do not center - span full width */
   background-color: inherit; /* inherit black from .nav-bar */
 }
 
 .nav-left {
   display: flex;
-  align-items: center;
+  align-items: center; /* vertically center logo and title */
+  color: #ffffff; /* logo text: white */
   gap: 0.75rem;
+  margin-left: 0; /* use container padding instead */
 }
 
 .nav-logo {
@@ -440,40 +470,43 @@ body {
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem; /* increase spacing between nav buttons/links */
 }
 
-/* Make nav buttons and Sign In share the same size & basic style */
+/* Unified navbar button styles (scoped to nav-right) */
 .nav-right .primary-button,
-.nav-link {
-  background: transparent;
-  color: #ffffff;
-  border: none;
+.nav-right .nav-link {
+  background: transparent; /* show navbar color */
+  color: #ffffff; /* white text by default */
+  border: 1px solid rgba(255,140,0,0.08);
   padding: 0.6rem 1rem; /* uniform button size */
   border-radius: 10px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.25s ease;
-  min-width: 96px;
+  transition: all 0.22s ease;
+  min-width: 110px; /* consistent width */
   text-align: center;
+  text-shadow: none;
 }
 
-/* Ensure nav primary button (Sign In / Sign Up) uses same font-size as other nav links */
+/* Ensure nav primary button uses same font-size */
 .nav-right .primary-button {
-  font-size: 1rem; /* match nav-link */
-  padding: 0.6rem 1rem;
-  min-width: 96px;
+  font-size: 1rem;
 }
 
 .nav-right .primary-button:hover,
-.nav-link:hover {
-  background: rgba(255,255,255,0.06);
+.nav-right .nav-link:hover {
+  background: rgba(255,255,255,0.9);
+  color: #ff8c00; /* orange on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(255,140,0,0.08);
 }
 
-/* Active state: slightly blurred orange-tinted background to indicate active section */
+/* Active state: orange-tinted background to indicate active section (dark text) */
+.nav-right .nav-link.active,
 .nav-link.active {
-  background: rgba(255,140,0,0.18);
-  color: #fff;
+  background: rgba(255,140,0,0.12);
+  color: #ffffff; /* keep active text white */
   backdrop-filter: blur(4px);
   box-shadow: 0 6px 18px rgba(255,140,0,0.12);
 }
@@ -483,18 +516,21 @@ body {
   margin-left: 0.75rem;
 }
 
-.nav-text h1 {
+.nav-text {
   margin: 0;
-  color: #ffffff; /* text stays white */
+  color: #ffffff; /* logo text: white */
+  display: flex;
+  align-items: center;
+  line-height: 1;
 }
 
 /* Home / hero */
 .home-page {
-  background: #ffffff;
+  background: transparent;
   color: #111827;
 }
 .hero {
-  background: linear-gradient(90deg, #000000 0%, #FF8C00 100%);
+  background: transparent; /* background removed so only photo shows */
   color: #fff;
   padding: 2.8rem 0; /* slightly reduced padding */
   min-height: 80vh; /* reduced hero height to bring About closer */
@@ -510,7 +546,7 @@ body {
 
 /* Constrained hero content, left margin and wrapping */
 .hero-content {
-  margin-left: 3.6rem; /* give the text a left offset */
+  margin-left: 120px; /* give the text a left offset (8rem = 128px @ 16px root) */
   max-width: 620px; /* don't let it stretch full width */
   word-break: break-word;
   white-space: normal;
@@ -527,12 +563,12 @@ body {
   color: #fff;
   border: none;
   font-weight: 800;
-  font-size: 1.12rem; /* slightly larger */
+  font-size: 1rem; /* slightly smaller */
   cursor: pointer;
-  padding: 0.9rem 1.3rem; /* bigger click target */
-  border-radius: 10px;
+  padding: 0.55rem 0.9rem; /* reduced padding for smaller button */
+  border-radius: 8px;
   text-align: center;
-  min-width: 120px;
+  min-width: 96px;
 }
 .hero-about-btn:hover { background: rgba(255,255,255,0.06); transform: translateY(-2px); }
 .hero-title {
@@ -542,7 +578,7 @@ body {
   line-height: 1.05;
 }
 .hero-title .brand { display: block; margin-left: 0; }
-.hero-title .hero-title-rest { display: block; font-size: 1.6rem; font-weight: 700; margin-top: 0.1rem; margin-left: 0; }
+.hero-title .hero-title-rest { display: block; font-size: 3.2rem; font-weight: 800; margin-top: 0.1rem; margin-left: 0; font-style: italic; }
 .hero-sub { color: rgba(255,255,255,0.9); margin-top: 0.75rem; }
 .merged-image {
   width: 260px;
@@ -565,9 +601,9 @@ body {
   inset: 0;
   background-size: cover;
   background-position: center center;
-  filter: blur(8px);
+  filter: blur(6px);
   transform: scale(1.03);
-  opacity: 0.28; /* subtle blur */
+  opacity: 1; /* lower opacity for subtle background */
   z-index: 0;
   pointer-events: none;
 }
@@ -588,8 +624,8 @@ body {
 .about {
   min-height: auto; /* let content dictate height so it sits naturally below hero */
   display: block;
-  padding-top: 0.8rem;
-  padding-bottom: 0.4rem;
+  /* match contact spacing */
+  padding: 0.4rem 0 0.8rem 0;
 }
 .about .section-card { width: 100%; }
 
@@ -609,8 +645,12 @@ body {
 }
 
 /* Overrides: hero layout & CTA adjustments requested by user */
+.hero-left {
+  margin-left: 300px; /* restore expression position */
+}
+
 .hero-content {
-  margin-left: 4.2rem !important;
+  margin-left: 0 !important; /* content itself is flush inside the section */
   max-width: 560px !important;
   word-break: break-word;
   white-space: normal;
@@ -629,18 +669,18 @@ body {
   line-height: 1.02;
 }
 .hero-title .brand { display: block; margin-left: 0; }
-.hero-title .hero-title-rest { display: block; font-size: 1.8rem; font-weight: 700; margin-top: 0.2rem; margin-left: 0; }
+.hero-title .hero-title-rest { display: block; font-size: 3rem !important; font-weight: 700; margin-top: 0.2rem; margin-left: 0; font-style: italic !important; }
 .hero-about-btn {
   background: rgba(255,140,0,0.12) !important; /* light orange */
   color: #fff !important;
   border: 1px solid rgba(255,140,0,0.22) !important;
   font-weight: 800 !important;
-  font-size: 1.18rem !important;
+  font-size: 1rem !important;
   cursor: pointer !important;
-  padding: 1rem 1.4rem !important;
-  border-radius: 10px !important;
+  padding: 0.55rem 0.95rem !important;
+  border-radius: 8px !important;
   text-align: center !important;
-  min-width: 140px !important;
+  min-width: 100px !important;
 }
 .hero-about-btn:hover { background: rgba(255,140,0,0.18) !important; transform: translateY(-2px); }
 
@@ -685,7 +725,16 @@ body {
     width: 64px;
     height: 64px;
   }
-  .nav-text h1 { font-size: 1rem; }
+  .nav-text { font-size: 1rem; }
+  /* reduce left offset on smaller screens for responsiveness */
+  .nav-left { margin-left: 12px; }
+  .hero-left { margin-left: 12px; }
+}
+
+/* Wider screens: optionally increase left gutter so content isn't flush to the very edge */
+@media (min-width: 1200px) {
+  /* increase container padding for very wide viewports */
+  .nav-container { padding-left: 100px; padding-right: 100px; }
 }
 
 @media (max-width: 600px) {
@@ -816,3 +865,18 @@ body {
 
 
 }
+
+/* Tighter About section: smaller padding and font for compact layout */
+.about .section-card {
+  padding: 0.9rem !important;
+}
+.about .section-title {
+  font-size: 1.25rem !important;
+  margin-bottom: 0.4rem !important;
+}
+.about .section-body {
+  font-size: 0.95rem !important;
+  line-height: 1.45 !important;
+  max-width: 760px !important;
+}
+

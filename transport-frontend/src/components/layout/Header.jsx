@@ -25,11 +25,12 @@ export default function Header() {
 
     return (
         <header className="nav-bar">
+            <div className="nav-bg" style={{ '--nav-bg-image': "url('/assets/busurban.jpg')" }} aria-hidden />
             <div className="nav-container">
                 {/* LEFT SIDE: logo + text */}
                 <div className="nav-left">
                     <img src={logo} alt="logo" className="nav-logo" />
-                    <h1 className="nav-text">UrbanFlow</h1>
+                    <h1 className="nav-text" style={{ color: '#ffffff' }}>UrbanFlow</h1>
                 </div>
 
                 {/* RIGHT SIDE: buttons */}

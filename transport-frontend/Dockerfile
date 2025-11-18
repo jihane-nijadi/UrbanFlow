@@ -2,6 +2,8 @@
 FROM node:18-alpine AS build
 WORKDIR /app
 COPY package*.json ./
+# Ensure npm is available in the Alpine image and install build deps if missing
+RUN apk add --no-cache nodejs npm
 RUN npm ci
 COPY . .
 RUN npm run build

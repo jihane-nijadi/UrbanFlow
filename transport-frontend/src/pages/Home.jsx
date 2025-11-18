@@ -37,13 +37,19 @@ export default function Home() {
   return (
     <main className="home-page">
       <section className="hero">
-        <div className="hero-bg" style={{ backgroundImage: "url('/merged.png')" }} aria-hidden />
+        <div
+          className="hero-bg"
+            style={{ backgroundImage: "url('/assets/busurban.jpg')" }}
+          aria-hidden
+        />
         <div className="hero-inner container">
           <div className="hero-left">
             <div className="hero-content">
               <h1 className="hero-title">
-                <span className="brand">UrbanFlow</span>
-                <span className="hero-title-rest"> Smarter transport, simpler tickets</span>
+               
+                <span className="hero-title-rest">Let's have </span>
+                <span className="hero-title-rest" >a smarter transport</span>
+                <span className="hero-title-rest">  with UrbanFlow</span>
               </h1>
               <p className="hero-sub">Find routes, buy tickets and travel with confidence.</p>
               <div className="hero-arrow-wrap">
@@ -56,7 +62,7 @@ export default function Home() {
         </div>
       </section>
 
-      <hr className="section-separator-hr" aria-hidden />
+      <hr className="section-separator-hr" />
 
       <section id="about" className="about container">
         <div className="card section-card">

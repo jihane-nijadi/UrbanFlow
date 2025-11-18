@@ -20,10 +20,10 @@ export default function SignInPage({ setUser }) {
           <div className=" illustration-box">
               <div className="merged-image large">
                 <img
-                  src="/merged.png"
+                  src="/assets/merged.png"
                   alt="bus and ticket"
                   onError={(e) => {
-                    if (e.target.src.indexOf("/img.png") === -1) e.target.src = "/img.png";
+                    if (e.target.src.indexOf("/assets/img.png") === -1) e.target.src = "/assets/img.png";
                   }}
                 />
               </div>

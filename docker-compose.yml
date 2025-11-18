@@ -147,8 +147,8 @@ services:
       context: ./transport-frontend
       dockerfile: Dockerfile
     container_name: urbanflow-frontend
-    ports:
-      - "3001:80"
+    # Port mapping removed to avoid conflict with docker-compose.override.yml
+    # In development `docker-compose.override.yml` maps the frontend to 3003:3003
     depends_on:
       route-service:
         condition: service_healthy

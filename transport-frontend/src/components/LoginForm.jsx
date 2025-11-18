@@ -16,7 +16,8 @@ export default function LoginForm({ setUser }) {
         try {
             const user = await authService.login(data);
             setUser(user); // important: update user state
-            navigate(`/${user.role.toLowerCase()}`);
+            // After successful sign-in, navigate to the passenger dashboard
+            navigate(`/passenger`);
         } catch (err) {
             setError(err.message);
         }
@@ -25,9 +26,7 @@ export default function LoginForm({ setUser }) {
     return (
         <div className="auth-card">
             <div className="auth-header">
-                <div className="icon-circle">
-                    <ArrowRight size={24} color="#FF8C00" />
-                </div>
+                <img src="/assets/logo.png" alt="logo" className="login-logo" />
                 <h2>Welcome Back</h2>
                 <p>Sign in to continue</p>
             </div>
@@ -67,6 +66,11 @@ export default function LoginForm({ setUser }) {
                     SIGN IN
                 </button>
             </form>
+            <div className="form-footer">
+                <p>
+                    Don't have an account? <a href="/signup" className="underline-link">Sign up</a>
+                </p>
+            </div>
         </div>
     );
 }

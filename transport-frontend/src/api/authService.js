@@ -1,4 +1,9 @@
-const API_URL = "/api";
+// Determine backend base URL depending on environment:
+// - Local dev (running `npm start`): frontend served from localhost, backend likely at localhost:8083
+// - Docker compose: frontend container will resolve `user-service` hostname on the same Docker network
+const host = window.location.hostname;
+const API_HOST = host === "localhost" || host === "127.0.0.1" ? "http://localhost:8083" : "http://user-service:8083";
+const API_URL = (process.env.REACT_APP_API_URL || API_HOST) + "/api";
 
 const authService = {
   register: async (data) => {

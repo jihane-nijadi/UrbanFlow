@@ -1,7 +1,7 @@
 import { useState } from "react";
 import authService from "../api/authService";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, User, Users, ArrowRight } from "lucide-react";
+import { Mail, Lock, User, Users } from "lucide-react";
 import "../styles/App.css";
 
 export default function SignupForm({ setUser }) {
@@ -11,8 +11,6 @@ export default function SignupForm({ setUser }) {
         lastName: "",
         email: "",
         password: "",
-        phoneNumber: "", // <-- ajouté
-        role: "PASSENGER",
     });
     const [error, setError] = useState("");
 
@@ -23,7 +21,7 @@ export default function SignupForm({ setUser }) {
         try {
             const user = await authService.register(data);
             setUser(user);
-            navigate(`/${user.role.toLowerCase()}`);
+            navigate(`/`);
         } catch (err) {
             setError(err.message);
         }
@@ -32,9 +30,7 @@ export default function SignupForm({ setUser }) {
     return (
         <div className="auth-card">
             <div className="auth-header">
-                <div className="icon-circle">
-                    <ArrowRight size={24} color="#FF8C00" />
-                </div>
+                <img src="/assets/logo.png" alt="logo" className="login-logo" />
                 <h2>Create Account</h2>
                 <p>Sign up to get started</p>
             </div>
@@ -86,19 +82,7 @@ export default function SignupForm({ setUser }) {
                     </div>
                 </div>
 
-                {/* Champ téléphone ajouté */}
-                <div className="input-group">
-                    <label>Phone Number</label>
-                    <div className="input-wrapper">
-                        <input
-                            type="tel"
-                            placeholder="+212 6 12 34 56 78"
-                            value={data.phoneNumber}
-                            onChange={(e) => setData({ ...data, phoneNumber: e.target.value })}
-                            required
-                        />
-                    </div>
-                </div>
+                {/* Phone input removed per design change */}
 
                 <div className="input-group">
                     <label>Password</label>
@@ -114,21 +98,17 @@ export default function SignupForm({ setUser }) {
                     </div>
                 </div>
 
-                <div className="input-group">
-                    <label>Role</label>
-                    <select
-                        value={data.role}
-                        onChange={(e) => setData({ ...data, role: e.target.value })}
-                    >
-                        <option value="PASSENGER">Passenger</option>
-                        <option value="DRIVER">Driver</option>
-                    </select>
-                </div>
+                {/* Role selection removed - single user type */}
 
                 <button type="submit" className="primary-button">
                     CREATE ACCOUNT
                 </button>
             </form>
+            <div className="form-footer">
+                <p>
+                    Already have an account? <a href="/auth" className="underline-link">Sign in</a>
+                </p>
+            </div>
         </div>
     );
 }

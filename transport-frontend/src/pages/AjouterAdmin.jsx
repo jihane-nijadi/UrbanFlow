@@ -8,7 +8,6 @@ export function AjouterAdmin() {
         email: "",
         phoneNumber: "",
         password: "",
-        role: "ADMINISTRATOR",
     });
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -27,7 +26,6 @@ export function AjouterAdmin() {
                 email: "",
                 phoneNumber: "",
                 password: "",
-                role: "ADMINISTRATOR",
             });
         } catch (err) {
             setError(err.message);

@@ -43,13 +43,14 @@ public class SecurityConfig {
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        // Allow only frontend container and local dev ports
-        config.setAllowedOrigins(Arrays.asList(
-            "http://urbanflow-frontend:80",
-            "http://localhost:3000",
-            "http://localhost:3001"
+        // Allow localhost origins on any port during development to avoid accidental 403s
+        // (e.g. the app may be served from localhost:3000, 3002, 3003, or 127.0.0.1)
+        config.setAllowedOriginPatterns(Arrays.asList(
+            "http://localhost:*",
+            "http://127.0.0.1:*"
         ));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+        // Include OPTIONS for preflight checks
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowCredentials(true);
 

@@ -9,20 +9,6 @@ export default function SignUpPage({ setUser }) {
         <div className="auth-left">
           <SignupForm setUser={setUser} />
         </div>
-
-        <div className="auth-right">
-          <div className=" illustration-box">
-            <div className="merged-image large">
-              <img
-                src="/assets/merged.png"
-                alt="bus and ticket"
-                onError={(e) => {
-                  if (e.target.src.indexOf("/assets/img.png") === -1) e.target.src = "/assets/img.png";
-                }}
-              />
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

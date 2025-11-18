@@ -30,13 +30,13 @@ public class User {
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
-    private UserRole role = UserRole.PASSENGER;
+    private UserRole role = UserRole.USER;
 
     @Column(updatable = false)
     @Builder.Default  // ← AJOUTEZ CETTE LIGNE
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public enum UserRole {
-        PASSENGER, DRIVER, ADMINISTRATOR
+        USER
     }
 }

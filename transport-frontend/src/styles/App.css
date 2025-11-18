@@ -16,6 +16,15 @@ body {
   min-height: 100vh;
 }
 
+/* Adjustable variable to control the right-side illustration height.
+   You can change this at runtime by setting the CSS variable
+   `--auth-right-image-height` on a parent (e.g., `:root` or `.auth-right`).
+   Default is 520px. */
+:root {
+  /* Increase default illustration height to make image taller by default */
+  --auth-right-image-height: 80vh;
+}
+
 /* Header */
 .header {
   background: linear-gradient(180deg, #ffffff 0%, #fffaf6 100%);
@@ -154,6 +163,28 @@ body {
   color: #6b7280;
   margin-top: 0.3rem;
   font-size: 0.9rem;
+}
+
+/* standalone logo used in the login header (no circle) */
+.login-logo {
+  width: 150px;
+  height: 50px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 0.6rem; /* center above the heading */
+}
+
+/* Footer placed at the bottom of the login form */
+.form-footer {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+.form-footer .underline-link { font-weight: 700; color: #FF8C00; }
+
+@media (max-width: 420px) {
+  .form-footer { font-size: 0.85rem; }
 }
 
 /* Error Alert */
@@ -684,18 +715,101 @@ body {
 }
 .hero-about-btn:hover { background: rgba(255,140,0,0.18) !important; transform: translateY(-2px); }
 
-/* Auth pages two-column layout */
-.auth-layout { padding: 4rem 0; }
-.auth-two-col { display: flex; gap: 0; align-items: stretch; justify-content: center; }
-.auth-left, .auth-right { flex: 1; }
+.auth-layout {
+  /* Center the auth content vertically and horizontally */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 0;
+  min-height: calc(100vh - 80px); /* leave space for navbar */
+}
+
+.auth-two-col {
+  display: flex;
+  gap: 0; /* no gap between the two columns */
+  align-items: stretch; /* make columns equal height */
+  justify-content: center;
+  width: 100%;
+  max-width: 1100px; /* constrain total width */
+  flex-wrap: nowrap; /* keep both columns on the same row */
+  overflow: hidden; /* prevent wrapping — content will scale/shrink */
+}
+
+.auth-left,
+.auth-right {
+  /* Use percentage basis so they remain attached and scale together */
+  flex: 0 1 55%; /* left: reduced to ~55% */
+  max-width: 720px;
+  padding: 0; /* remove internal padding so elements touch */
+  min-width: 180px; /* allow shrink but avoid collapsing completely */
+}
+
+.auth-right {
+  flex: 0 1 45%; /* right: adjusted to ~45% image area */
+  max-width: 440px;
+}
+
 .auth-left { padding-right: 0; }
-.auth-right { display:flex; align-items:center; justify-content:center; background: #fffaf6; }
-.illustration-box { padding: 3rem; }
+
+.auth-right {
+  display:flex;
+  align-items: stretch; /* ensure right column fills the same height as left */
+  justify-content:center;
+  background: #fffaf6;
+  padding: 0; /* ensure no spacing between columns */
+  border: 2px solid rgba(0,0,0,0.06); /* make the column edge visible */
+  box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+  /* allow the column height to be driven by content or JS sizing */
+  min-height: 0;
+  height: 100%;
+}
+
+/* Image sizing inside auth-right */
+.auth-right .merged-image.large {
+  width: 100%;
+  /* fill the full height/width of the right column */
+  height: 100%;
+  display: block;
+  /* stretch to match the column height */
+  align-self: stretch;
+  /* ensure the image area is at least the configured height */
+  min-height: var(--auth-right-image-height);
+  min-height: 120px;
+  max-width: none;
+}
+
+/* make the actual <img> fill the merged-image container */
+.auth-right .merged-image.large img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  /* ensure the actual <img> is at least the configured illustration height */
+  min-height: var(--auth-right-image-height);
+  object-fit: cover;
+  display: block;
+}
+.illustration-box { padding: 0; width: 100%; height: 100%; }
+
+/* Desktop: increase the overall auth columns height so the image is taller */
+@media (min-width: 960px) {
+  .auth-two-col { min-height: 740px; }
+}
 .auth-footer { margin-top: 1rem; text-align: left; }
 .underline-link { text-decoration: underline; color: #FF8C00; font-weight:700 }
 
 /* Ensure Login/Signup card styling fits the new layout */
 .auth-card { max-width: 520px; margin: 0 auto; }
+
+/* Ensure the auth card fills its column height and centers the form vertically */
+.auth-left .auth-card {
+  /* Let the card size itself by content so the left column defines
+     the height for the two-column layout. Removing height:100% avoids
+     a circular sizing dependency where the column had no intrinsic height. */
+  display: block;
+  max-width: 420px; /* reduced form width */
+  width: 100%;
+  margin: 1.25rem auto; /* keep some vertical breathing room */
+}
 
 
 /* Responsive tweaks */
@@ -729,6 +843,30 @@ body {
   /* reduce left offset on smaller screens for responsiveness */
   .nav-left { margin-left: 12px; }
   .hero-left { margin-left: 12px; }
+
+  /* keep columns on one row even on small screens; let them shrink
+     so the right column doesn't drop under the left — this can cause
+     horizontal overflow on very narrow screens if content cannot shrink. */
+  .auth-two-col {
+    flex-direction: row;
+    gap: 0;
+    align-items: center;
+    padding: 0 0.5rem;
+  }
+
+  .auth-left, .auth-right {
+    /* allow both to shrink below their base widths */
+    flex-shrink: 1;
+    min-width: 140px;
+  }
+
+  .auth-right .merged-image.large {
+    max-width: 260px;
+    height: auto;
+  }
+
+  /* reduce the enforced min-height on small screens to avoid excessive vertical space */
+  .auth-right { min-height: 420px; }
 }
 
 /* Wider screens: optionally increase left gutter so content isn't flush to the very edge */

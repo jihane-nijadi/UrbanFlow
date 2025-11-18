@@ -18,19 +18,7 @@ function App() {
         if (storedUser) setUser(storedUser);
     }, []);
 
-    // Fonction pour obtenir la route correcte selon le rôle
-    const getRouteByRole = (role) => {
-        switch (role) {
-            case "ADMINISTRATOR":
-                return "/admin";
-            case "PASSENGER":
-                return "/passenger";
-            case "DRIVER":
-                return "/driver";
-            default:
-                return "/";
-        }
-    };
+    // Role-based routing removed: routes will be guarded by authentication only.
 
     return (
         <Router>
@@ -42,36 +30,9 @@ function App() {
                 <Route path="/signup" element={<SignUpPage setUser={setUser} />} />
 
                 {/* Routes protégées */}
-                <Route
-                    path="/admin"
-                    element={
-                        user?.role === "ADMINISTRATOR" ? (
-                            <AdminDashboard />
-                        ) : (
-                            <Navigate to="/" replace />
-                        )
-                    }
-                />
-                <Route
-                    path="/passenger"
-                    element={
-                        user?.role === "PASSENGER" ? (
-                            <PassengerDashboard />
-                        ) : (
-                            <Navigate to="/" replace />
-                        )
-                    }
-                />
-                <Route
-                    path="/driver"
-                    element={
-                        user?.role === "DRIVER" ? (
-                            <DriverDashboard />
-                        ) : (
-                            <Navigate to="/" replace />
-                        )
-                    }
-                />
+                <Route path="/admin" element={user ? <AdminDashboard /> : <Navigate to="/" replace />} />
+                <Route path="/passenger" element={user ? <PassengerDashboard /> : <Navigate to="/" replace />} />
+                <Route path="/driver" element={user ? <DriverDashboard /> : <Navigate to="/" replace />} />
 
                 {/* Catch-all */}
                 <Route path="*" element={<Navigate to="/" replace />} />

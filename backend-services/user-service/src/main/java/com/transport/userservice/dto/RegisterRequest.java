@@ -20,5 +20,5 @@ public class RegisterRequest {
     private String lastName;
 
     private String phoneNumber;
-    private String role = "PASSENGER";
+    // role removed: all users now use a default single user type on the backend
 }

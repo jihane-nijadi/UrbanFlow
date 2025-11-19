@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { useLocation } from 'react-router-dom';
 import TicketPurchase from "../components/TicketPurchase";
 import MyTickets from "./MyTickets";
-import { Ticket, MapPin, Bell } from "lucide-react";
+import { Ticket, MapPin, CreditCard } from "lucide-react";
+import PaymentDashboard from "./PaymentDashboard";
 import Sidebar from "../components/Sidebar";
 import MapView from "../components/MapView";
 
@@ -11,6 +13,7 @@ export default function PassengerDashboard() {
     const [activeTab, setActiveTab] = useState("acheterTickets");
     const [focusBusId, setFocusBusId] = useState(null);
     const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const location = useLocation();
 
 
     const handleLogout = () => {
@@ -32,6 +35,19 @@ export default function PassengerDashboard() {
         }
     }, []);
 
+    // If we are navigated to /passenger with a session query param, open the payments tab
+    useEffect(() => {
+        try {
+            const params = new URLSearchParams(location.search);
+            const session = params.get('session');
+            if (session) {
+                setActiveTab('payments');
+            }
+        } catch (e) {
+            // ignore
+        }
+    }, [location.search]);
+
     // Also respond to storage events (in case follow was triggered in another tab)
     useEffect(() => {
         const handler = (e) => {
@@ -46,11 +62,11 @@ export default function PassengerDashboard() {
     }, []);
 
     // Sidebar actions for passengers: only Acheter and Gérer tickets
+    // Remove direct 'Paiement' action from sidebar; payments only available via purchase flow
     const roleActions = [
         { tab: "acheterTickets", icon: <Ticket size={20} />, label: "Acheter tickets" },
         { tab: "gererTickets", icon: <Ticket size={20} />, label: "Gérer mes tickets" },
         { tab: "map", icon: <MapPin size={20} />, label: "Carte" },
-        { tab: "notifications", icon: <Bell size={20} />, label: "Notifications" },
     ];
 
     const renderContent = () => {
@@ -69,14 +85,7 @@ export default function PassengerDashboard() {
                     </div>
                 </>
             );
-            case "notifications": return (
-                <div className="card">
-                    <h3>Notifications</h3>
-                    <div style={{ marginTop: 12 }}>
-                        <p style={{ color: '#6b7280' }}>Vous n'avez pas de nouvelles notifications.</p>
-                    </div>
-                </div>
-            );
+            case "payments": return <PaymentDashboard />;
             default: return <div>Bienvenue, {user.firstName}!</div>;
         }
     };

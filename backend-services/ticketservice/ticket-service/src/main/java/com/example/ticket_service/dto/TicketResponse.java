@@ -30,4 +30,6 @@ public class TicketResponse {
     private LocalDateTime purchaseDate;
     private LocalDateTime validUntil;
     private String qrCode;
+    // Optional URL to initiate payment for this ticket (payment-service)
+    private String paymentUrl;
 }

@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,52 +36,111 @@ public class TicketService {
     private final TicketEventPublisher eventPublisher;
     private final RouteServiceClient routeServiceClient;
 
+    @Value("${PAYMENT_SERVICE_URL:http://payment-service:8085}")
+    private String paymentServiceUrl;
+    @Value("${PAYMENT_SERVICE_PUBLIC_URL:}")
+    private String paymentServicePublicUrl;
+
     @Transactional
     public TicketResponse createTicket(TicketRequest request) {
         log.info("Creating ticket for user: {} on route: {}, schedule: {}", 
                 request.getUserId(), request.getRouteId(), request.getScheduleId());
 
-        // Fetch route and schedule information from Route Service
-        RouteDTO route = routeServiceClient.getRouteById(request.getRouteId());
-        ScheduleDTO schedule = routeServiceClient.getScheduleById(request.getScheduleId());
 
-        // Validate that schedule belongs to the route
-        if (!schedule.getRouteId().equals(route.getRouteId())) {
-            throw new IllegalArgumentException(
-                    "Schedule " + request.getScheduleId() + " does not belong to route " + request.getRouteId());
+        // Attempt to fetch route and schedule information from Route Service.
+        // If route service is unavailable or IDs are missing, fall back to using provided payload values
+        RouteDTO route = null;
+        ScheduleDTO schedule = null;
+        try {
+            if (request.getRouteId() != null) route = routeServiceClient.getRouteById(request.getRouteId());
+        } catch (Exception e) {
+            log.warn("Route service unavailable or route not found for id {}: {}", request.getRouteId(), e.getMessage());
+        }
+        try {
+            if (request.getScheduleId() != null) schedule = routeServiceClient.getScheduleById(request.getScheduleId());
+        } catch (Exception e) {
+            log.warn("Route service unavailable or schedule not found for id {}: {}", request.getScheduleId(), e.getMessage());
         }
 
-        // Check seat availability (limit: 70 seats per schedule per date)
-        long bookedSeats = ticketRepository.countByScheduleIdAndTravelDate(
-                request.getScheduleId(), request.getTravelDate());
-        if (bookedSeats >= 70) {
-            throw new SeatAlreadyBookedException(
-                    "All seats are booked for this schedule on " + request.getTravelDate() + " (70/70 seats taken)");
+        // If schedule is available, validate it belongs to the route
+        if (schedule != null && route != null) {
+            if (!schedule.getRouteId().equals(route.getRouteId())) {
+                throw new IllegalArgumentException(
+                        "Schedule " + request.getScheduleId() + " does not belong to route " + request.getRouteId());
+            }
         }
 
-        // Create ticket with route and schedule information
-        Ticket ticket = Ticket.builder()
-                .userId(request.getUserId())
-                .routeId(request.getRouteId())
-                .scheduleId(request.getScheduleId())
-                .routeName(route.getRouteName())
-                .departureStop(schedule.getDepartureStop())
+        // Check seat availability (limit: 70 seats per schedule per date) only when scheduleId and travelDate are present
+        if (request.getScheduleId() != null && request.getTravelDate() != null) {
+            long bookedSeats = ticketRepository.countByScheduleIdAndTravelDate(
+                    request.getScheduleId(), request.getTravelDate());
+            if (bookedSeats >= 70) {
+                throw new SeatAlreadyBookedException(
+                        "All seats are booked for this schedule on " + request.getTravelDate() + " (70/70 seats taken)");
+            }
+        }
+
+        // Ensure we have numeric identifiers for route and schedule.
+        // If the frontend didn't provide numeric IDs, derive stable numeric IDs from descriptive codes.
+        Long effectiveRouteId = request.getRouteId();
+        Long effectiveScheduleId = request.getScheduleId();
+        if (effectiveRouteId == null && request.getRouteCode() != null) {
+            effectiveRouteId = deterministicIdFromString(request.getRouteCode());
+            log.info("Derived numeric routeId={} from routeCode={}", effectiveRouteId, request.getRouteCode());
+        }
+        if (effectiveScheduleId == null) {
+            // Attempt to derive schedule id from available attributes (routeCode or stops + travelDate)
+            String scheduleKey = null;
+            if (request.getRouteCode() != null) scheduleKey = request.getRouteCode();
+            else scheduleKey = (request.getDepartureStop() != null ? request.getDepartureStop() : "") + "|" +
+                    (request.getArrivalStop() != null ? request.getArrivalStop() : "") + "|" +
+                    (request.getTravelDate() != null ? request.getTravelDate().toString() : "");
+            effectiveScheduleId = deterministicIdFromString(scheduleKey);
+            log.info("Derived numeric scheduleId={} from key={}", effectiveScheduleId, scheduleKey);
+        }
+
+        // Create ticket with route and schedule information (use effective numeric ids)
+        Ticket.TicketBuilder tb = Ticket.builder()
+            .userId(request.getUserId())
+            .routeId(effectiveRouteId)
+            .scheduleId(effectiveScheduleId)
+            .travelDate(request.getTravelDate())
+            .price(request.getPrice())
+            .status(TicketStatus.PENDING)
+            .qrCode(generateQRCode());
+
+        if (route != null) tb.routeName(route.getRouteName());
+        else if (request.getRouteCode() != null) tb.routeName(request.getRouteCode());
+        else tb.routeName("Ad-hoc");
+        if (schedule != null) {
+            tb.departureStop(schedule.getDepartureStop())
                 .arrivalStop(schedule.getArrivalStop())
                 .departureTime(schedule.getDepartureTime())
-                .arrivalTime(schedule.getArrivalTime())
-                .travelDate(request.getTravelDate())
-                .price(request.getPrice())
-                .status(TicketStatus.PENDING)
-                .qrCode(generateQRCode())
-                .build();
+                .arrivalTime(schedule.getArrivalTime());
+        } else {
+            tb.departureStop(request.getDepartureStop() != null ? request.getDepartureStop() : "Unknown")
+                .arrivalStop(request.getArrivalStop() != null ? request.getArrivalStop() : "Unknown")
+                .departureTime(request.getTravelDate() != null ? request.getTravelDate().toLocalTime().toString() : "")
+                .arrivalTime("");
+        }
+
+        Ticket ticket = tb.build();
 
         Ticket savedTicket = ticketRepository.save(ticket);
+        String routeNameStr = (route != null) ? route.getRouteName() : savedTicket.getRouteName();
+        String routeStops = "";
+        if (schedule != null) routeStops = schedule.getDepartureStop() + " -> " + schedule.getArrivalStop();
+        else routeStops = savedTicket.getDepartureStop() + " -> " + savedTicket.getArrivalStop();
         log.info("Ticket created successfully with ID: {} for route: {} ({})", 
-                savedTicket.getId(), route.getRouteName(), schedule.getDepartureStop() + " -> " + schedule.getArrivalStop());
+            savedTicket.getId(), routeNameStr, routeStops);
 
         // Publish ticket created event to RabbitMQ
         publishTicketCreatedEvent(savedTicket);
 
+        // Do not return a direct payment page URL here. Payment should be handled via the payment-service session
+        // or via the frontend payment dashboard. Returning a paymentUrl that points at payment-service
+        // causes clients to be redirected to the raw payment page; avoid that by returning the ticket response
+        // without a paymentUrl and let the frontend create a payment session when needed.
         return ticketMapper.toResponse(savedTicket);
     }
 
@@ -179,6 +239,15 @@ public class TicketService {
     private String generateQRCode() {
         // Generate a unique QR code identifier
         return UUID.randomUUID().toString();
+    }
+
+    private Long deterministicIdFromString(String key) {
+        if (key == null) return null;
+        // Use a stable hash to convert a descriptive string into a positive Long id
+        int h = key.hashCode();
+        long id = Integer.toUnsignedLong(h);
+        if (id == 0) id = 1L;
+        return id;
     }
 
     // ============= EVENT PUBLISHING METHODS =============

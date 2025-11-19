@@ -107,43 +107,7 @@ docker-compose logs route-db
 docker-compose logs ticket-db
 docker-compose logs rabbitmq
 
-# Follow logs (real-time)
-docker-compose logs -f
-```
-
-### Restart a Service
-```powershell
-docker-compose restart route-db
-docker-compose restart ticket-db
-docker-compose restart rabbitmq
-```
-
-### Access PostgreSQL Database
-
-**Route Database:**
-```powershell
-docker exec -it route-db psql -U postgres -d route_db
-```
-
-**Ticket Database:**
-```powershell
-docker exec -it ticket-db psql -U postgres -d ticket_db
-```
-
-**Common PostgreSQL Commands:**
-```sql
--- List all tables
-\dt
-
--- Describe a table
-\d table_name
-
--- List all databases
-\l
-
--- Exit
-\q
-```
+<!-- Note: local run guidance was removed per request; keep file focused on Docker setup -->
 
 ## RabbitMQ Management UI
 
@@ -228,3 +192,40 @@ docker-compose ps
 ```
 
 Healthy services will show `(healthy)` in the status column.
+
+## Running services locally — common pitfall
+
+Do not run `mvn spring-boot:run` for services that expect Docker-hosted databases (for example, `ticket-service` expects `ticket-db` as the hostname). If you run a service locally without the Docker infra, it will try to connect to hostnames like `ticket-db` or `rabbitmq` and fail with `UnknownHostException`.
+
+Two recommended approaches:
+
+- Start the infra in Docker and run services there (recommended for full end-to-end testing).
+- Or run the service locally but override the datasource to use an H2 in-memory DB (good for fast single-service checks).
+
+### Helper script (recommended)
+
+Use the included PowerShell helper to bring up infra and optionally start the services. From the repository root run:
+
+```powershell
+# Start infra and wait for health checks
+.\scripts\start-infra-and-run.ps1
+
+# Start infra and also build+start ticket and payment services
+.\scripts\start-infra-and-run.ps1 -StartServices
+```
+
+The script will wait for `ticket-db`, `route-db`, `rabbitmq` and `route-service` to become healthy before returning. If a container fails healthchecks the script will warn and you can inspect logs with `docker-compose logs <service>`.
+
+### Running a single service locally with H2
+
+Set environment vars to point to an in-memory H2 database before running Maven:
+
+```powershell
+$env:SPRING_DATASOURCE_URL='jdbc:h2:mem:testdb'
+$env:SPRING_DATASOURCE_USERNAME='sa'
+$env:SPRING_DATASOURCE_PASSWORD=''
+cd backend-services\ticketservice\ticket-service
+.\mvnw.cmd spring-boot:run
+```
+
+Use this mode when you only need to test the controller logic without full messaging and DB persistence.

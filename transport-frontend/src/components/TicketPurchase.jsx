@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import routeService from '../api/routeService';
 import ticketService from '../api/ticketService';
+import paymentService from '../api/paymentService';
 import geolocationService from '../api/geolocationService';
 import '../styles/App.css';
 
@@ -23,6 +25,15 @@ export default function TicketPurchase() {
   const [message, setMessage] = useState('');
   const [results, setResults] = useState([]);
   const [selectedRoute, setSelectedRoute] = useState(null);
+  const navigate = useNavigate();
+
+  const getAuthHeaders = () => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const headers = {};
+    const token = user && (user.token || user.accessToken || user.authToken);
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+  };
 
   const doSearch = async () => {
     setMessage('');
@@ -174,12 +185,45 @@ export default function TicketPurchase() {
         arrivalStop: route.to,
         departureTime: departureTimeIso || route.departure,
         quantity,
+        price: (7 * (quantity || 1)),
         passengerEmail: user.email || 'demo@example.com'
       };
 
-      const res = await ticketService.purchaseTicket(payload);
-      setMessage("Achat réussi — réf : " + (res.confirmation || res.id || 'ok'));
+      // Create a payment session in payment-service instead of creating the ticket immediately
+      // payment-service will create the actual ticket only after payment is completed
+      // Create a payment session in payment-service. Do NOT fall back to creating the ticket directly.
+      const res = await paymentService.createSession(payload);
+      console.debug('purchase response', res);
+      // After session creation, navigate to payment dashboard
+      const createdId = res && (res.sessionId || res.id || res.ticketId || res.confirmation || res["id"]);
       setSelectedRoute(route.id);
+      // If backend returned a direct payment URL, open the payment flow inside the frontend dashboard
+      if (res && (res.paymentUrl || res.sessionId)) {
+        try {
+          // navigate to passenger dashboard and open Payments tab with session id and amount
+          // Prefer explicit sessionId returned by the payment-service. Never follow a paymentUrl returned by backend.
+          const sessionId = res.sessionId || res.id || null;
+          const amt = (res.amount || res.price || payload.price || (7 * (quantity || 1))).toString();
+          if (!sessionId) throw new Error('No session id returned from payment service');
+          // Open the standalone Payment Dashboard in a new tab so the user only sees the payment form
+          const url = `${window.location.origin}/payment?session=${encodeURIComponent(sessionId)}&amount=${encodeURIComponent(amt)}`;
+          // open payments dashboard in a new browser tab
+          window.open(url, '_blank');
+          return;
+        } catch (pe) {
+          setMessage('Achat créé mais impossible d' + "\"" + 'ouvrir le paiement: ' + (pe.message || pe.toString()));
+          return;
+        }
+      }
+
+      if (createdId) {
+        const amt = (res.amount || res.price || payload.price || (7 * (quantity || 1))).toString();
+        const sessionParam = encodeURIComponent(createdId);
+        const url = `${window.location.origin}/passenger?session=${sessionParam}&amount=${encodeURIComponent(amt)}`;
+        window.open(url, '_blank');
+        return;
+      }
+      setMessage("Échec lors de la création de la session de paiement — réessayez plus tard");
     } catch (err) {
       setMessage("Échec de l'achat : " + (err.message || err.toString()));
     } finally {

@@ -5,6 +5,7 @@ import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import PassengerDashboard from "./pages/PassengerDashboard";
+import PaymentDashboard from "./pages/PaymentDashboard";
 import DriverDashboard from "./pages/DriverDashboard";
 import authService from "./api/authService";
 import Header from "./components/layout/Header";
@@ -33,6 +34,9 @@ function App() {
                 {/* Routes protégées */}
                 <Route path="/admin" element={user ? <AdminDashboard /> : <Navigate to="/" replace />} />
                 <Route path="/passenger" element={user ? <PassengerDashboard /> : <Navigate to="/" replace />} />
+                {/* Standalone payment route used when opening the payment form in a separate tab */}
+                <Route path="/payment" element={<PaymentDashboard />} />
+                <Route path="/payment/:ticketId" element={<PaymentDashboard />} />
                 <Route path="/driver" element={user ? <DriverDashboard /> : <Navigate to="/" replace />} />
                 <Route path="/carte" element={<MapPage />} />
 

@@ -12,14 +12,16 @@ const getAuthHeaders = () => {
 
 const ticketService = {
   async purchaseTicket(payload) {
-    const res = await fetch(`${BASE}/tickets/purchase`, {
+    // Create a ticket/order on the ticket-service. Ticket will be created with status PENDING
+    // and a ticketId returned; frontend should redirect to payment dashboard for actual payment.
+    const res = await fetch(`${BASE}/tickets`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify(payload),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Ticket purchase failed');
+      throw new Error(err.message || 'Ticket creation failed');
     }
     return res.json();
   },

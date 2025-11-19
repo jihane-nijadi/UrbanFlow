@@ -10,6 +10,9 @@ export default function Header() {
     const hash = location.hash || "";
     const pathname = location.pathname || "/";
 
+    // Hide header when showing standalone payment page (clean payment UI in new tab)
+    if (pathname.startsWith('/payment')) return null;
+
     const isHomeActive = pathname === "/" && (hash === "" || hash === "#" || !hash);
     const isAboutActive = hash === "#about";
     const isContactActive = hash === "#contact";

@@ -13,6 +13,10 @@ public class TicketMapper {
      */
 
     public TicketResponse toResponse(Ticket ticket) {
+        return toResponse(ticket, null);
+    }
+
+    public TicketResponse toResponse(Ticket ticket, String paymentUrl) {
         return TicketResponse.builder()
                 .id(ticket.getId())
                 .userId(ticket.getUserId())
@@ -29,6 +33,7 @@ public class TicketMapper {
                 .purchaseDate(ticket.getPurchaseDate())
                 .validUntil(ticket.getValidUntil())
                 .qrCode(ticket.getQrCode())
+                .paymentUrl(paymentUrl)
                 .build();
     }
 }

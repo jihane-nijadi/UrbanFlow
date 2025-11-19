@@ -3,6 +3,7 @@ import TicketPurchase from "../components/TicketPurchase";
 import MyTickets from "./MyTickets";
 import { Ticket, MapPin, Bell } from "lucide-react";
 import Sidebar from "../components/Sidebar";
+import MapView from "../components/MapView";
 
 
 export default function PassengerDashboard() {
@@ -31,8 +32,8 @@ export default function PassengerDashboard() {
             case "map": return (
                 <div className="card">
                     <h3>Carte</h3>
-                    <div id="map-preview" style={{ height: 420, borderRadius: 12, background: '#eef2f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ color: '#6b7280' }}>Aperçu de la carte (placeholder)</span>
+                    <div id="map-preview" style={{ height: 420, borderRadius: 12, overflow: 'hidden' }}>
+                        <MapView />
                     </div>
                 </div>
             );

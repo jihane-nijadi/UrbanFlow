@@ -8,6 +8,7 @@ import PassengerDashboard from "./pages/PassengerDashboard";
 import DriverDashboard from "./pages/DriverDashboard";
 import authService from "./api/authService";
 import Header from "./components/layout/Header";
+import MapPage from "./pages/MapPage";
 
 function App() {
     const [user, setUser] = useState(null);
@@ -33,6 +34,7 @@ function App() {
                 <Route path="/admin" element={user ? <AdminDashboard /> : <Navigate to="/" replace />} />
                 <Route path="/passenger" element={user ? <PassengerDashboard /> : <Navigate to="/" replace />} />
                 <Route path="/driver" element={user ? <DriverDashboard /> : <Navigate to="/" replace />} />
+                <Route path="/carte" element={<MapPage />} />
 
                 {/* Catch-all */}
                 <Route path="*" element={<Navigate to="/" replace />} />

@@ -88,6 +88,18 @@ public class PaymentController {
         }
     }
 
+    @GetMapping("/user/{userId}/completed")
+    public ResponseEntity<?> getCompletedSessionsForUser(@PathVariable String userId) {
+        try {
+            // Return payment sessions with status COMPLETED for the given user
+            var sessions = sessionRepository.findByUserIdAndStatus(userId, "COMPLETED");
+            return ResponseEntity.ok(sessions);
+        } catch (Exception e) {
+            log.error("Failed to fetch completed payment sessions for user {}", userId, e);
+            return ResponseEntity.status(500).body(Map.of("error", "session_lookup_failed"));
+        }
+    }
+
     
 
     @PostMapping("/{ticketId}/pay")

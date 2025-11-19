@@ -149,6 +149,26 @@ export default function TicketPurchase() {
       }
     };
     loadStops();
+    // Check for a prefill payload (when user clicked 'Changer' on an existing ticket)
+    try {
+      const raw = localStorage.getItem('uf_prefill_ticket');
+      if (raw) {
+        const pf = JSON.parse(raw);
+        if (pf) {
+          if (pf.departureStop) setFrom(pf.departureStop);
+          if (pf.arrivalStop) setTo(pf.arrivalStop);
+          if (pf.departureTime && typeof pf.departureTime === 'string') {
+            // try to extract date part
+            const m = pf.departureTime.match(/^(\d{4}-\d{2}-\d{2})/);
+            if (m) setDepartureDate(m[1]);
+          }
+          if (pf.quantity) setQuantity(pf.quantity);
+        }
+        localStorage.removeItem('uf_prefill_ticket');
+      }
+    } catch (e) {
+      // ignore
+    }
     return () => { mounted = false; };
   }, []);
 

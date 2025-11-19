@@ -39,7 +39,6 @@ export default function PaymentDashboard() {
                 arrivalStop: meta.arrivalStop || '',
                 travelDate: meta.departureTime || meta.travelDate || ''
               });
-              setRawSession(s);
             }
           }
         }
@@ -80,7 +79,7 @@ export default function PaymentDashboard() {
       };
       const targetId = ticketId || sessionId;
       const res = await paymentService.payTicket(targetId, payload);
-        setLastPayResponse(res);
+        // Payment response handled, navigate back to passenger
       setMessage('Paiement réussi — transaction: ' + (res.transactionId || res.id || 'ok'));
       // Give backend a moment to process events; then redirect to passenger tickets
       setTimeout(() => navigate('/passenger'), 1200);
@@ -133,18 +132,7 @@ export default function PaymentDashboard() {
         {message && <div className="info-box" style={{ marginTop: 12 }}>{message}</div>}
         {/* Debug panel to show raw session and last pay response for troubleshooting */}
         <div style={{ marginTop: 12 }}>
-          {rawSession && (
-            <div style={{ background: '#0f172a', color: '#e6eef8', padding: 8, borderRadius: 6, fontSize: 12 }}>
-              <div style={{ fontWeight: 700, marginBottom: 6 }}>DEBUG: Session JSON</div>
-              <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{JSON.stringify(rawSession, null, 2)}</pre>
-            </div>
-          )}
-          {lastPayResponse && (
-            <div style={{ background: '#05264a', color: '#e6f7ff', padding: 8, borderRadius: 6, fontSize: 12, marginTop: 8 }}>
-              <div style={{ fontWeight: 700, marginBottom: 6 }}>DEBUG: Last Pay Response</div>
-              <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{JSON.stringify(lastPayResponse, null, 2)}</pre>
-            </div>
-          )}
+          {/* Debug panels removed to keep payment UI minimal */}
         </div>
       </div>
     </div>

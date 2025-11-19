@@ -40,6 +40,19 @@ const paymentService = {
   }
 
   ,
+  async getCompletedSessionsForUser(userId) {
+    const res = await fetch(`${BASE}/payments/user/${encodeURIComponent(userId)}/completed`, {
+      method: 'GET',
+      headers: { ...getAuthHeaders() }
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      throw new Error(txt || 'Failed to fetch completed sessions');
+    }
+    return res.json();
+  }
+
+  ,
   async getSession(sessionId) {
     const res = await fetch(`${BASE}/payments/sessions/${encodeURIComponent(sessionId)}`, {
       method: 'GET',

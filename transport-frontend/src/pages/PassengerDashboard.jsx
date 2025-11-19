@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { MapPin, Bus, Ticket } from "lucide-react";
+import TicketPurchase from "../components/TicketPurchase";
+import MyTickets from "./MyTickets";
+import { Ticket, MapPin, Bell } from "lucide-react";
 import Sidebar from "../components/Sidebar";
-import Profile from "../components/Profile";
-import BusTracker from "../components/BusTracker";
-import RoutePlanner from "../components/RoutePlanner";
 
 
 export default function PassengerDashboard() {
-    const [activeTab, setActiveTab] = useState("dashboard");
+    // default to the ticket purchase view so users land directly on Acheter Tickets after sign-in
+    const [activeTab, setActiveTab] = useState("acheterTickets");
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
 
@@ -16,31 +16,48 @@ export default function PassengerDashboard() {
         window.location.href = "/";
     };
 
+    // Sidebar actions for passengers: only Acheter and Gérer tickets
     const roleActions = [
-        { tab: "trajets", icon: <MapPin size={20} />, label: "Trajets" },
-        { tab: "buses", icon: <Bus size={20} />, label: "Bus sur Map" },
         { tab: "acheterTickets", icon: <Ticket size={20} />, label: "Acheter tickets" },
         { tab: "gererTickets", icon: <Ticket size={20} />, label: "Gérer mes tickets" },
+        { tab: "map", icon: <MapPin size={20} />, label: "Carte" },
+        { tab: "notifications", icon: <Bell size={20} />, label: "Notifications" },
     ];
 
     const renderContent = () => {
         switch(activeTab){
-            case "buses": return <BusTracker />; // affichage de la carte
-            case "profile": return <Profile user={user} />;
-            case "trajets": return <RoutePlanner />;
-            case "buses": return <div>Consulter les bus disponibles</div>;
-            case "acheterTickets": return <div>Acheter des tickets</div>;
-            case "gererTickets": return <div>Gérer mes tickets</div>;
-            default: return <div>Welcome, {user.firstName}!</div>;
+            case "acheterTickets": return <TicketPurchase />;
+            case "gererTickets": return <MyTickets />;
+            case "map": return (
+                <div className="card">
+                    <h3>Carte</h3>
+                    <div id="map-preview" style={{ height: 420, borderRadius: 12, background: '#eef2f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ color: '#6b7280' }}>Aperçu de la carte (placeholder)</span>
+                    </div>
+                </div>
+            );
+            case "notifications": return (
+                <div className="card">
+                    <h3>Notifications</h3>
+                    <div style={{ marginTop: 12 }}>
+                        <p style={{ color: '#6b7280' }}>Vous n'avez pas de nouvelles notifications.</p>
+                    </div>
+                </div>
+            );
+            default: return <div>Bienvenue, {user.firstName}!</div>;
         }
     };
 
     return (
-        <div style={{ display: "flex", height: "100vh", backgroundColor: "#f9f9fb" }}>
-            <Sidebar user={user} activeTab={activeTab} setActiveTab={setActiveTab} roleActions={roleActions} handleLogout={handleLogout} />
-            <main style={{ flex: 1, padding: "2.5rem", overflowY: "auto" }}>
-                {renderContent()}
-            </main>
+        <div className="passenger-dashboard-root" style={{ position: 'relative', minHeight: '100vh' }}>
+            {/* full-dashboard runtime background so both sidebar and main share the same blurred image */}
+            <div className="dashboard-bg" style={{ backgroundImage: "url('/assets/busurban.jpg')" }} aria-hidden />
+            <div style={{ display: "flex", height: "100vh", position: 'relative', zIndex: 2 }}>
+                <Sidebar user={user} activeTab={activeTab} setActiveTab={setActiveTab} roleActions={roleActions} handleLogout={handleLogout} />
+                <main style={{ flex: 1, padding: "2.5rem", overflowY: "auto" }}>
+                    {renderContent()}
+                </main>
+            </div>
         </div>
     );
 }

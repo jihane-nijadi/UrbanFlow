@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import geolocationService from '../api/geolocationService';
 
 // Fix icônes par défaut de Leaflet
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -20,16 +21,22 @@ L.Icon.Default.mergeOptions({
 export default function BusTracker() {
     const [busLocations, setBusLocations] = useState([]);
 
-    // URL de ton geolocation-service
-    const API_URL = "/api/location/all";
-
 
     useEffect(() => {
         // Fonction pour récupérer les positions
         const fetchBusLocations = async () => {
             try {
-                const response = await fetch(API_URL);
-                const data = await response.json();
+                const raw = await geolocationService.getAllBuses();
+                // Normalize different external formats to the shape we expect
+                const data = Array.isArray(raw) ? raw.map(d => ({
+                    vehicleId: d.busId || d.vehicleId || d.id || d.vehicle_id,
+                    latitude: d.lat || d.latitude || d.latitude_deg || d.lat_deg,
+                    longitude: d.lon || d.longitude || d.longitude_deg || d.lng,
+                    routeId: d.lineId || d.routeId || d.route_id,
+                    status: d.status || 'ACTIVE',
+                    speed: d.speed || d.velocity,
+                    heading: d.heading || d.bearing
+                })) : [];
                 setBusLocations(data);
             } catch (error) {
                 console.error("Erreur lors de la récupération des positions des bus:", error);

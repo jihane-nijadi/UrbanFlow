@@ -69,6 +69,53 @@ services:
       timeout: 5s
       retries: 5
 
+  geolocation-service:
+    build:
+      context: ./backend-services/geolocation-service
+      dockerfile: Dockerfile
+    container_name: urbanflow-geolocation-service
+    environment:
+      SPRING_APPLICATION_NAME: geolocation-service
+      # Expose mock data by default for local dev; set to false when using external APIs
+      EXTERNAL_API_ENABLE_MOCK: "true"
+      EXTERNAL_API_POLL_INTERVAL_MS: 5000
+      # Optional: enable persistence and datasource for geolocation service
+      GEOLOCATION_PERSISTENCE_ENABLED: "true"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://geolocation-db:5432/geolocation_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: hello
+    ports:
+      - "8091:8091"
+    volumes:
+      - geolocation-data:/var/lib/geolocation
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8091/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+    depends_on:
+      geolocation-db:
+        condition: service_healthy
+
+  geolocation-db:
+    image: postgres:15-alpine
+    container_name: urbanflow-geolocation-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: hello
+      POSTGRES_DB: geolocation_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - geolocation-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   route-service:
     build:
       context: ./backend-services/route-service
@@ -78,6 +125,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://route-db:5432/route_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: hello
+      # Geolocation service (internal DNS name)
+      GEOLOCATION_SERVICE_URL: http://geolocation-service:8091
+      SPRING_RABBITMQ_HOST: rabbitmq
     ports:
       - "8081:8081"
     depends_on:
@@ -87,7 +137,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -156,6 +206,8 @@ services:
         condition: service_healthy
       user-service:
         condition: service_healthy
+      geolocation-service:
+        condition: service_healthy
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -171,4 +223,8 @@ volumes:
   ticket-db-data:
     driver: local
   user-db-data:
+    driver: local
+  geolocation-data:
+    driver: local
+  geolocation-db-data:
     driver: local

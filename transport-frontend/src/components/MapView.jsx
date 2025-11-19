@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import geolocationService from '../api/geolocationService';
@@ -16,10 +16,14 @@ try {
   // ignore in environments where require is not available
 }
 
-export default function MapView({ center = [33.589886, -7.603869], zoom = 12 }) {
+export default function MapView({ center = [33.589886, -7.603869], zoom = 12, focusBusId = null }) {
   const [buses, setBuses] = useState({}); // keyed by busId
+  const [lineFilter, setLineFilter] = useState('');
+  const [highlightedBus, setHighlightedBus] = useState(null);
   const eventSourceRef = useRef(null);
   const pollingRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerRefs = useRef({});
 
   // Helper to upsert bus updates
   const upsertUpdates = (updates) => {
@@ -138,16 +142,49 @@ export default function MapView({ center = [33.589886, -7.603869], zoom = 12 }) 
   }, []);
 
   const markers = Object.values(buses || {});
+  const lines = Array.from(new Set(markers.map(m => m.lineId).filter(Boolean))).sort();
+  const filtered = lineFilter ? markers.filter(m => m.lineId === lineFilter) : markers;
+
+  useEffect(() => {
+    if (!focusBusId) return;
+    // try to focus when buses state updates or when focusBusId changes
+    const attemptFocus = () => {
+      const b = buses && buses[focusBusId];
+      if (b && mapRef.current) {
+        try {
+          mapRef.current.flyTo([Number(b.lat) || 0, Number(b.lon) || 0], 16, { duration: 1.0 });
+          setHighlightedBus(focusBusId);
+          // Open the marker popup if available
+          const mRef = markerRefs.current && markerRefs.current[focusBusId];
+          try {
+            if (mRef && typeof mRef.openPopup === 'function') {
+              // open after a short delay to ensure marker/popup is attached
+              setTimeout(() => { try { mRef.openPopup(); } catch (err) {} }, 300);
+            }
+          } catch (err) {
+            // ignore
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+    };
+    attemptFocus();
+    // also try again after a short delay (in case markers load later)
+    const t = setTimeout(attemptFocus, 800);
+    return () => clearTimeout(t);
+  }, [focusBusId, buses]);
 
   return (
-    <div style={{ height: '70vh', width: '100%' }}>
-      <MapContainer center={center} zoom={zoom} style={{ height: '100%', width: '100%' }}>
+    <div style={{ position: 'relative', height: '70vh', width: '100%' }}>
+      <MapContainer whenCreated={m => { mapRef.current = m; }} center={center} zoom={zoom} style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {markers.map(m => (
-          <Marker key={m.busId} position={[Number(m.lat) || 0, Number(m.lon) || 0]}>
+        {filtered.map(m => (
+          <Marker key={m.busId} position={[Number(m.lat) || 0, Number(m.lon) || 0]}
+            ref={el => { if (el) markerRefs.current[m.busId] = el; else delete markerRefs.current[m.busId]; }}>
             <Popup>
               <div style={{ minWidth: 180 }}>
                 <div style={{ fontWeight: 700 }}>{m.lineId || 'Bus'}</div>
@@ -160,7 +197,33 @@ export default function MapView({ center = [33.589886, -7.603869], zoom = 12 }) 
             </Popup>
           </Marker>
         ))}
+
+        {/* Highlighted bus marker (drawn on top) */}
+        {highlightedBus && buses[highlightedBus] && (
+          <CircleMarker
+            center={[Number(buses[highlightedBus].lat) || 0, Number(buses[highlightedBus].lon) || 0]}
+            radius={10}
+            pathOptions={{ color: '#ff4040', fillColor: '#ff8080', fillOpacity: 0.6 }}
+          />
+        )}
       </MapContainer>
+
+      {/* Overlay controls / legend */}
+      <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 1000, background: 'rgba(255,255,255,0.95)', padding: 10, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.12)', minWidth: 200 }}>
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>Carte — Aperçu</div>
+        <div style={{ fontSize: 13, color: '#374151', marginBottom: 8 }}>Affiche la position en temps réel des bus. Cliquez sur une icône pour plus de détails.</div>
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ fontSize: 12, color: '#6b7280' }}>Filtrer par ligne</label>
+          <select value={lineFilter} onChange={e => setLineFilter(e.target.value)} style={{ width: '100%', marginTop: 6 }}>
+            <option value=''>Toutes les lignes</option>
+            {lines.map(l => <option key={l} value={l}>{l}</option>)}
+          </select>
+        </div>
+        <div style={{ fontSize: 12, color: '#6b7280' }}>
+          Légende:
+          <div style={{ marginTop: 6 }}><span style={{ display: 'inline-block', width: 12, height: 12, background: '#3388ff', marginRight: 8 }}></span>Bus en circulation</div>
+        </div>
+      </div>
     </div>
   );
 }

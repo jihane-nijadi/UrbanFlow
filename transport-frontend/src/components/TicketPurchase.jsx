@@ -16,7 +16,6 @@ export default function TicketPurchase() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [departureDate, setDepartureDate] = useState('');
-  const [time, setTime] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [stops, setStops] = useState([]);
   
@@ -79,7 +78,7 @@ export default function TicketPurchase() {
         // Use normalized results as provided by the backend (no artificial staggering).
         const deduped = dedupeByDepArr(normalized);
         const withMocks = addMissingSchedules(deduped);
-        setResults(withMocks);
+        setResults(filterOutSpecificTime(withMocks));
       } else if (Array.isArray(res)) {
         // If the route-service returned a plain array, normalize times (handle object LocalTime shapes)
         const formatScheduleTime = (val) => {
@@ -112,7 +111,7 @@ export default function TicketPurchase() {
         // Use normalized array results directly but ensure desired schedule times exist per line.
         const dedupedArr = dedupeByDepArr(normalizedArray);
         const withMocksArr = addMissingSchedules(dedupedArr);
-        setResults(withMocksArr);
+        setResults(filterOutSpecificTime(withMocksArr));
       } else {
         const fromName = (stops.find(x => x.stopId === from) || {}).name || '';
         const toName = (stops.find(x => x.stopId === to) || {}).name || '';
@@ -125,6 +124,8 @@ export default function TicketPurchase() {
       setResults(fakeResults.filter(r => (!from || r.from.toLowerCase().includes(fromName.toLowerCase())) && (!to || r.to.toLowerCase().includes(toName.toLowerCase()))));
     } finally { setLoading(false); }
   };
+
+
 
   useEffect(() => {
     let mounted = true;
@@ -268,9 +269,76 @@ export default function TicketPurchase() {
     return String(raw).split('|')[0];
   };
 
+  // Detect synthetic/mock entries by looking for a |mock suffix in id or raw.busId
+  const isMockItem = (item) => {
+    if (!item) return false;
+    const id = String(item.id || '');
+    if (id.toLowerCase().includes('|mock')) return true;
+    const rawBusId = item.raw && (item.raw.busId || item.raw.id || '');
+    if (String(rawBusId).toLowerCase().includes('|mock')) return true;
+    if (item.raw && item.raw.mock === true) return true;
+    return false;
+  };
+
+  // Generate a Casablanca-like bus number for synthetic schedules.
+  // Deterministic, produces numbers in range 1..199 based on lineKey and time.
+  const generateCasablancaBusNumber = (lineKey, time, seq = 0) => {
+    const key = String(lineKey || '') + '|' + String(time || '') + '|' + String(seq || 0);
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+      hash = ((hash << 5) - hash) + key.charCodeAt(i);
+      hash |= 0;
+    }
+    const base = Math.abs(hash) % 150 + 1; // 1..150
+    const hourMatch = String(time || '').match(/^(\d{2}):/);
+    const hour = hourMatch ? Number(hourMatch[1]) : 0;
+    const num = ((base + hour + seq) % 199) + 1; // ensure 1..199
+    return `Bus ${num}`;
+  };
+
+  // Allocate a unique bus number not already used in this result set.
+  const allocateUniqueBusNumber = (lineKey, time, usedNumbers, seqStart = 0) => {
+    let seq = seqStart;
+    for (let attempts = 0; attempts < 500; attempts++) {
+      const label = generateCasablancaBusNumber(lineKey, time, seq);
+      const m = label.match(/(\d+)$/);
+      const n = m ? Number(m[1]) : null;
+      if (n == null || !usedNumbers.has(n)) {
+        if (n != null) usedNumbers.add(n);
+        return label;
+      }
+      seq += 1;
+    }
+    // fallback: find first free number 1..199
+    for (let v = 1; v <= 199; v++) {
+      if (!usedNumbers.has(v)) { usedNumbers.add(v); return `Bus ${v}`; }
+    }
+    return generateCasablancaBusNumber(lineKey, time, seqStart);
+  };
+
+  // Remove any specific unwanted schedule entries (e.g. depart 09:00 arrive 09:30)
+  const filterOutSpecificTime = (list) => {
+    if (!Array.isArray(list)) return list;
+    return list.filter(item => {
+      try {
+        const dep = formatHourMinute(item.departure);
+        const arr = formatHourMinute(item.arrival);
+        // filter out exact match 09:00 -> 09:30
+        if (dep === '09:00' && arr === '09:30') return false;
+        // filter out any entries whose duration cannot be computed
+        const dur = computeDuration(item.departure, item.arrival);
+        if (dur === 'N/A') return false;
+      } catch (e) {
+        // ignore and keep item
+      }
+      return true;
+    });
+  };
+
   // Ensure each line has the desired scheduled times by adding mock schedule entries
   const addMissingSchedules = (list) => {
-    const desiredTimes = ['09:00','10:30','12:00','14:00','16:00'];
+    // ensure we include a 09:30 departure (arrives ~10:00) and other useful slots
+    const desiredTimes = ['09:30','10:30','12:00','14:00','16:00'];
     const byLine = new Map();
     for (const it of list) {
       const lineKey = (it.raw && (it.raw.lineId || it.raw.busId)) || it.bus || 'LINE';
@@ -283,7 +351,15 @@ export default function TicketPurchase() {
       if (!items || items.length === 0) return;
       const existing = new Set(items.map(i => formatHourMinute(i.departure)));
       const template = items[0];
-      desiredTimes.forEach(time => {
+      // collect used numeric bus numbers from existing items to avoid collisions
+      const usedNumbers = new Set();
+      for (const it of items) {
+        try {
+          const m = String(it.bus).match(/(\d+)$/);
+          if (m) usedNumbers.add(Number(m[1]));
+        } catch (e) {}
+      }
+      desiredTimes.forEach((time, timeIdx) => {
         if (!existing.has(time)) {
           const depDate = parseToDate(time) || parseToDate(new Date().toISOString().slice(0,10) + 'T' + time);
           let arr = '';
@@ -292,9 +368,11 @@ export default function TicketPurchase() {
             arr = `${pad(arrDate.getHours())}:${pad(arrDate.getMinutes())}`;
           }
           const newId = `${template.id || template.bus || lineKey}|${time}|mock`;
+          // allocate a unique Casablanca-like bus number for the synthetic instance
+          const busLabel = allocateUniqueBusNumber(lineKey, time, usedNumbers, timeIdx);
           const newItem = {
             id: newId,
-            bus: template.bus || lineKey,
+            bus: busLabel,
             from: template.from || '',
             to: template.to || '',
             departure: time,
@@ -361,10 +439,7 @@ export default function TicketPurchase() {
           <label>Date départ</label>
           <input className="form-input" type="date" value={departureDate} onChange={(e)=>setDepartureDate(e.target.value)} />
         </div>
-        <div className="input-group">
-          <label>Heure</label>
-          <input className="form-input" type="time" value={time} onChange={(e)=>setTime(e.target.value)} />
-        </div>
+        
         <div className="input-group">
           <label>Quantité</label>
           <input className="form-input" type="number" min={1} value={quantity} onChange={(e)=>setQuantity(parseInt(e.target.value)||1)} />
@@ -374,7 +449,7 @@ export default function TicketPurchase() {
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12 }}>
         <div style={{ display: 'flex', gap: 8 }}>
           <button aria-label="Rechercher les trajets" className="primary-button" onClick={doSearch} disabled={loading}>{loading ? 'Recherche...' : 'Rechercher'}</button>
-          <button aria-label="Effacer les filtres" className="logout-button" onClick={()=>{ setFrom(''); setTo(''); setDepartureDate(''); setTime(''); setResults([]); }}>{'Effacer'}</button>
+          <button aria-label="Effacer les filtres" className="logout-button" onClick={()=>{ setFrom(''); setTo(''); setDepartureDate(''); setResults([]); }}>{'Effacer'}</button>
         </div>
         {results.length ? (
           <div style={{ color: '#6b7280', alignSelf: 'center' }}>{`${results.length} résultats`}</div>
@@ -387,7 +462,10 @@ export default function TicketPurchase() {
             <div key={r.id} className="result-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <div style={{ fontWeight: 800, fontSize: '1rem' }}>{r.bus} <span style={{ fontSize: 12, color: '#6b7280', marginLeft: 8 }}>{formatDisplayId(r)}</span></div>
+                  <div style={{ fontWeight: 800, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div>{r.bus}</div>
+                    <span style={{ fontSize: 12, color: '#6b7280', marginLeft: 8 }}>{formatDisplayId(r)}</span>
+                  </div>
                   <div style={{ color: '#374151', marginTop: 6 }}>{r.from} → {r.to}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -406,7 +484,7 @@ export default function TicketPurchase() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button aria-label={`Acheter billet pour ${r.bus} ${formatDisplayId(r)}`} className="primary-button" onClick={() => doPurchase(r)} disabled={loading || selectedRoute === r.id}>{selectedRoute === r.id ? 'Acheté' : 'Acheter'}</button>
+                    <button aria-label={`Acheter billet pour ${r.bus} ${formatDisplayId(r)}`} className="primary-button" onClick={() => doPurchase(r)} disabled={loading || selectedRoute === r.id}>{selectedRoute === r.id ? 'Acheté' : 'Acheter'}</button>
                 </div>
               </div>
             </div>

@@ -13,7 +13,6 @@ export default function Header() {
     const isHomeActive = pathname === "/" && (hash === "" || hash === "#" || !hash);
     const isAboutActive = hash === "#about";
     const isContactActive = hash === "#contact";
-    const isCarteActive = pathname === "/carte";
 
     const goTo = (section) => {
         if (!section) {
@@ -58,7 +57,7 @@ export default function Header() {
                         Contact
                     </button>
 
-                    <Link to="/carte" className={`nav-link ${isCarteActive ? 'active' : ''}`} style={{ marginLeft: 8 }} aria-current={isCarteActive ? 'page' : undefined}>Carte</Link>
+                    {/* carte link removed per request; PassengerDashboard still contains the map tab */}
 
                     <Link to="/auth" className="primary-button nav-signin">
                         Sign In

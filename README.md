@@ -179,6 +179,10 @@ npm start
 docker-compose up -d
 ```
 
+### Production Infrastructure
+
+Follow `docs/deployment/infrastructure-setup.md` to provision a secure Ubuntu VM (or equivalent) and prepare networking, TLS, and secrets before running the Compose stack in production.
+
 ### Kubernetes (AWS EKS)
 ```bash
 # Apply K8s manifests

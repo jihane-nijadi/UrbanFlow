@@ -6,6 +6,11 @@ This guide explains how to set up and run PostgreSQL and RabbitMQ using Docker f
 
 - Docker Desktop installed on your system
 - Docker Compose (comes with Docker Desktop)
+- Create a local `.env` file by copying the tracked template:
+  ```bash
+  cp env.template .env
+  ```
+  Update the copied file with environment-specific secrets (Postgres passwords, JWT secret, public URLs) before running any Compose commands. The `.env` file is git-ignored so your credentials stay out of version control.
 
 ## Services Overview
 

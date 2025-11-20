@@ -1,0 +1,186 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch: # Permet de déclencher manuellement
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/urbanflow
+
+jobs:
+  # Job 1: Build and push Docker images
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    strategy:
+      matrix:
+        service:
+          - name: route-service
+            context: ./backend-services/route-service
+            dockerfile: Dockerfile
+          - name: ticket-service
+            context: ./backend-services/ticketservice/ticket-service
+            dockerfile: Dockerfile
+          - name: user-service
+            context: ./backend-services/user-service
+            dockerfile: Dockerfile
+          - name: payment-service
+            context: ./backend-services/payment-service
+            dockerfile: Dockerfile
+          - name: geolocation-service
+            context: ./backend-services/geolocation-service
+            dockerfile: Dockerfile
+          - name: frontend
+            context: ./transport-frontend
+            dockerfile: Dockerfile
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service.name }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.context }}
+          file: ${{ matrix.service.context }}/${{ matrix.service.dockerfile }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  # Job 2: Run tests (optionnel - à activer quand les tests sont prêts)
+  # test:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Set up JDK 17
+  #       uses: actions/setup-java@v4
+  #       with:
+  #         java-version: '17'
+  #         distribution: 'temurin'
+  #     - name: Run tests
+  #       run: |
+  #         cd backend-services/route-service && mvn test
+  #         cd ../ticket-service && mvn test
+  #         # etc.
+
+  # Job 3: Deploy to Kubernetes (seulement sur main branch)
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: "5.0.0"
+
+      - name: Configure kubectl
+        run: |
+          # Configure ton cluster Kubernetes ici
+          # Exemple pour un cluster distant :
+          # echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+          # Ou pour un cluster cloud :
+          # aws eks update-kubeconfig --name your-cluster --region us-east-1
+          echo "Configure kubectl selon ton environnement"
+          # kubectl config set-cluster ...
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+
+      - name: Update image tags in Kubernetes manifests
+        run: |
+          # Mettre à jour les tags d'images dans les manifests Kustomize
+          cd infrastructure/kubernetes/prod
+          
+          # Utiliser 'latest' pour la branche main, sinon utiliser le SHA
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            IMAGE_TAG="latest"
+          else
+            IMAGE_TAG="${{ github.sha }}"
+            IMAGE_TAG="${IMAGE_TAG:0:7}"
+          fi
+          
+          echo "Using image tag: $IMAGE_TAG"
+          echo "Image prefix: ${{ env.IMAGE_PREFIX }}"
+          
+          # Mettre à jour les images dans kustomization.yaml
+          # Format: <old-image>=<new-image>
+          kustomize edit set image \
+            ghcr.io/urbanflow/route-service=ghcr.io/${{ env.IMAGE_PREFIX }}/route-service:$IMAGE_TAG \
+            ghcr.io/urbanflow/ticket-service=ghcr.io/${{ env.IMAGE_PREFIX }}/ticket-service:$IMAGE_TAG \
+            ghcr.io/urbanflow/user-service=ghcr.io/${{ env.IMAGE_PREFIX }}/user-service:$IMAGE_TAG \
+            ghcr.io/urbanflow/payment-service=ghcr.io/${{ env.IMAGE_PREFIX }}/payment-service:$IMAGE_TAG \
+            ghcr.io/urbanflow/geolocation-service=ghcr.io/${{ env.IMAGE_PREFIX }}/geolocation-service:$IMAGE_TAG \
+            ghcr.io/urbanflow/frontend=ghcr.io/${{ env.IMAGE_PREFIX }}/frontend:$IMAGE_TAG
+          
+          echo "Updated kustomization.yaml with new image tags"
+          cat kustomization.yaml
+
+      - name: Build Kustomize manifests
+        run: |
+          cd infrastructure/kubernetes/prod
+          kustomize build . > /tmp/k8s-manifests.yaml
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f /tmp/k8s-manifests.yaml
+          kubectl rollout status deployment/route-service -n urbanflow --timeout=5m
+          kubectl rollout status deployment/ticket-service -n urbanflow --timeout=5m
+          kubectl rollout status deployment/user-service -n urbanflow --timeout=5m
+          kubectl rollout status deployment/payment-service -n urbanflow --timeout=5m
+          kubectl rollout status deployment/geolocation-service -n urbanflow --timeout=5m
+          kubectl rollout status deployment/frontend -n urbanflow --timeout=5m
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n urbanflow
+          kubectl get services -n urbanflow
+

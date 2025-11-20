@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: urbanflow-config
+  namespace: urbanflow
+data:
+  RABBITMQ_HOST: rabbitmq.default
+  ROUTE_SERVICE_INTERNAL_URL: http://route-service.urbanflow.svc.cluster.local:8081
+  PAYMENT_SERVICE_INTERNAL_URL: http://payment-service.urbanflow.svc.cluster.local:8085
+  PAYMENT_SERVICE_PUBLIC_URL: https://app.example.com/api/payments
+  GEOLOCATION_SERVICE_INTERNAL_URL: http://geolocation-service.urbanflow.svc.cluster.local:8091
+  GEOLOCATION_EXTERNAL_API_ENABLE_MOCK: "true"
+  GEOLOCATION_EXTERNAL_API_POLL_INTERVAL_MS: "5000"
+  GEOLOCATION_PERSISTENCE_ENABLED: "true"
+  USER_SERVICE_JWT_EXPIRATION_MS: "86400000"
+

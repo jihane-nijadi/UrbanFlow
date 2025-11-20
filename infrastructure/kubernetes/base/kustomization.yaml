@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: urbanflow
+resources:
+  - namespace.yaml
+  - configmap-common.yaml
+  - secret-placeholders.yaml
+  - infra-rabbitmq.yaml
+  - apps-route-service.yaml
+  - apps-ticket-service.yaml
+  - apps-user-service.yaml
+  - apps-payment-service.yaml
+  - apps-geolocation-service.yaml
+  - apps-frontend.yaml
+

@@ -5,9 +5,9 @@ services:
     image: postgres:15-alpine
     container_name: urbanflow-route-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: hello
-      POSTGRES_DB: route_db
+      POSTGRES_USER: ${ROUTE_DB_USER}
+      POSTGRES_PASSWORD: ${ROUTE_DB_PASSWORD}
+      POSTGRES_DB: ${ROUTE_DB_NAME}
     ports:
       - "5433:5432"
     volumes:
@@ -22,9 +22,9 @@ services:
     image: postgres:15-alpine
     container_name: urbanflow-ticket-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: hello
-      POSTGRES_DB: ticket_db
+      POSTGRES_USER: ${TICKET_DB_USER}
+      POSTGRES_PASSWORD: ${TICKET_DB_PASSWORD}
+      POSTGRES_DB: ${TICKET_DB_NAME}
     ports:
       - "5434:5432"
     volumes:
@@ -39,9 +39,9 @@ services:
     image: postgres:15-alpine
     container_name: urbanflow-user-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: hello
-      POSTGRES_DB: transport_db
+      POSTGRES_USER: ${USER_DB_USER}
+      POSTGRES_PASSWORD: ${USER_DB_PASSWORD}
+      POSTGRES_DB: ${USER_DB_NAME}
     ports:
       - "5435:5432"
     volumes:
@@ -56,8 +56,8 @@ services:
     image: rabbitmq:3-management-alpine
     container_name: urbanflow-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -77,13 +77,13 @@ services:
     environment:
       SPRING_APPLICATION_NAME: geolocation-service
       # Expose mock data by default for local dev; set to false when using external APIs
-      EXTERNAL_API_ENABLE_MOCK: "true"
-      EXTERNAL_API_POLL_INTERVAL_MS: 5000
+      EXTERNAL_API_ENABLE_MOCK: "${GEOLOCATION_EXTERNAL_API_ENABLE_MOCK}"
+      EXTERNAL_API_POLL_INTERVAL_MS: ${GEOLOCATION_EXTERNAL_API_POLL_INTERVAL_MS}
       # Optional: enable persistence and datasource for geolocation service
-      GEOLOCATION_PERSISTENCE_ENABLED: "true"
-      SPRING_DATASOURCE_URL: jdbc:postgresql://geolocation-db:5432/geolocation_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: hello
+      GEOLOCATION_PERSISTENCE_ENABLED: "${GEOLOCATION_PERSISTENCE_ENABLED}"
+      SPRING_DATASOURCE_URL: "${GEOLOCATION_SERVICE_DB_URL}"
+      SPRING_DATASOURCE_USERNAME: ${GEOLOCATION_SERVICE_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${GEOLOCATION_SERVICE_DB_PASSWORD}
     ports:
       - "8091:8091"
     volumes:
@@ -103,9 +103,9 @@ services:
     image: postgres:15-alpine
     container_name: urbanflow-geolocation-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: hello
-      POSTGRES_DB: geolocation_db
+      POSTGRES_USER: ${GEOLOCATION_DB_USER}
+      POSTGRES_PASSWORD: ${GEOLOCATION_DB_PASSWORD}
+      POSTGRES_DB: ${GEOLOCATION_DB_NAME}
     ports:
       - "5436:5432"
     volumes:
@@ -122,12 +122,12 @@ services:
       dockerfile: Dockerfile
     container_name: urbanflow-route-service
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://route-db:5432/route_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: hello
+      SPRING_DATASOURCE_URL: "${ROUTE_SERVICE_DB_URL}"
+      SPRING_DATASOURCE_USERNAME: ${ROUTE_SERVICE_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${ROUTE_SERVICE_DB_PASSWORD}
       # Geolocation service (internal DNS name)
-      GEOLOCATION_SERVICE_URL: http://geolocation-service:8091
-      SPRING_RABBITMQ_HOST: rabbitmq
+      GEOLOCATION_SERVICE_URL: "${GEOLOCATION_SERVICE_INTERNAL_URL}"
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_HOST}
     ports:
       - "8081:8081"
     depends_on:
@@ -148,13 +148,13 @@ services:
       dockerfile: Dockerfile
     container_name: urbanflow-ticket-service
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://ticket-db:5432/ticket_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: hello
-      SPRING_RABBITMQ_HOST: rabbitmq
-      ROUTE_SERVICE_URL: http://route-service:8081
-      PAYMENT_SERVICE_URL: http://payment-service:8085
-      PAYMENT_SERVICE_PUBLIC_URL: http://localhost:8085
+      SPRING_DATASOURCE_URL: "${TICKET_SERVICE_DB_URL}"
+      SPRING_DATASOURCE_USERNAME: ${TICKET_SERVICE_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${TICKET_SERVICE_DB_PASSWORD}
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_HOST}
+      ROUTE_SERVICE_URL: "${ROUTE_SERVICE_INTERNAL_URL}"
+      PAYMENT_SERVICE_URL: "${PAYMENT_SERVICE_INTERNAL_URL}"
+      PAYMENT_SERVICE_PUBLIC_URL: "${PAYMENT_SERVICE_PUBLIC_URL}"
     ports:
       - "8082:8082"
     depends_on:
@@ -177,7 +177,7 @@ services:
       dockerfile: Dockerfile
     container_name: urbanflow-payment-service
     environment:
-      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_HOST}
       SPRING_APPLICATION_NAME: payment-service
     ports:
       - "8085:8085"
@@ -199,11 +199,11 @@ services:
       dockerfile: Dockerfile
     container_name: urbanflow-user-service
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:5432/transport_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: hello
-      JWT_SECRET: 5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437
-      JWT_EXPIRATION: 86400000
+      SPRING_DATASOURCE_URL: "${USER_SERVICE_DB_URL}"
+      SPRING_DATASOURCE_USERNAME: ${USER_SERVICE_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${USER_SERVICE_DB_PASSWORD}
+      JWT_SECRET: ${USER_SERVICE_JWT_SECRET}
+      JWT_EXPIRATION: ${USER_SERVICE_JWT_EXPIRATION_MS}
     ports:
       - "8083:8083"
     depends_on:

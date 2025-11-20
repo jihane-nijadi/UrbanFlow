@@ -1,0 +1,42 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../base
+
+# Images will be automatically updated by CI/CD pipeline
+# The pipeline replaces these with: ghcr.io/<github-username>/urbanflow/<service>:<commit-sha>
+# Format: <old-image>=<new-image>
+# 
+# To manually update images, use:
+# kustomize edit set image \
+#   ghcr.io/urbanflow/route-service=ghcr.io/YOUR_USERNAME/urbanflow/route-service:TAG \
+#   ghcr.io/urbanflow/ticket-service=ghcr.io/YOUR_USERNAME/urbanflow/ticket-service:TAG \
+#   ...
+#
+# These are the base images that will be replaced by the CI/CD pipeline
+images:
+  - name: ghcr.io/urbanflow/route-service
+    newName: ghcr.io/urbanflow/route-service
+    newTag: latest
+  - name: ghcr.io/urbanflow/ticket-service
+    newName: ghcr.io/urbanflow/ticket-service
+    newTag: latest
+  - name: ghcr.io/urbanflow/user-service
+    newName: ghcr.io/urbanflow/user-service
+    newTag: latest
+  - name: ghcr.io/urbanflow/payment-service
+    newName: ghcr.io/urbanflow/payment-service
+    newTag: latest
+  - name: ghcr.io/urbanflow/geolocation-service
+    newName: ghcr.io/urbanflow/geolocation-service
+    newTag: latest
+  - name: ghcr.io/urbanflow/frontend
+    newName: ghcr.io/urbanflow/frontend
+    newTag: latest
+
+# Add production-specific patches here (replica counts, HPA, ingress hosts).
+# Example:
+# patchesStrategicMerge:
+#   - hpa-route-service.yaml
+#   - ingress-prod.yaml
+

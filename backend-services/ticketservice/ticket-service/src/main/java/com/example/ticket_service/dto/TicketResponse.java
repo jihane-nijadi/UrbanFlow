@@ -32,4 +32,6 @@ public class TicketResponse {
     private String qrCode;
     // Optional URL to initiate payment for this ticket (payment-service)
     private String paymentUrl;
+    // Bus identifier persisted on the ticket (if provided at creation)
+    private String bus;
 }

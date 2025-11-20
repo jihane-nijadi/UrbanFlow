@@ -25,6 +25,7 @@ public class TicketCreatedEvent {
     private String arrivalTime;
     private JsonNode travelDate;
     private BigDecimal price;
+    private String bus;
     private JsonNode purchaseDate;
     private JsonNode eventTimestamp;
 }

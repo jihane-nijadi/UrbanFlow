@@ -25,6 +25,8 @@ public class TicketCreatedEvent {
     private String arrivalTime;
     private LocalDateTime travelDate;
     private BigDecimal price;
+    // Persisted bus identifier (if available)
+    private String bus;
     private LocalDateTime purchaseDate;
     @Builder.Default
     private String eventType = "TICKET_CREATED";

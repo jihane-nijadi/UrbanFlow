@@ -109,6 +109,10 @@ public class TicketService {
             .status(TicketStatus.PENDING)
             .qrCode(generateQRCode());
 
+        if (request.getBus() != null) {
+            tb.bus(request.getBus());
+        }
+
         if (route != null) tb.routeName(route.getRouteName());
         else if (request.getRouteCode() != null) tb.routeName(request.getRouteCode());
         else tb.routeName("Ad-hoc");
@@ -264,6 +268,7 @@ public class TicketService {
                     .arrivalStop(ticket.getArrivalStop())
                     .departureTime(ticket.getDepartureTime())
                     .arrivalTime(ticket.getArrivalTime())
+                    .bus(ticket.getBus())
                     .travelDate(ticket.getTravelDate())
                     .price(ticket.getPrice())
                     .purchaseDate(ticket.getPurchaseDate())

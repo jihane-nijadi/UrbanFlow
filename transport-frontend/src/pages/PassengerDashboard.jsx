@@ -30,6 +30,7 @@ export default function PassengerDashboard() {
                 setFocusBusId(b);
                 localStorage.removeItem('uf_focus_bus');
             }
+            // removed uf_open_tab redirect handling (reverted)
         } catch (e) {
             // ignore
         }

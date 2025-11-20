@@ -21,6 +21,9 @@ public class CreateTicketPayload {
 
     private Passenger passenger;
 
+    // Bus identifier selected by the user at purchase time (e.g. "001", "BUS-12")
+    private String bus;
+
     @Data
     public static class Passenger {
         private String name;

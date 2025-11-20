@@ -75,6 +75,9 @@ public class Ticket {
     @Column(length = 500)
     private String qrCode;
 
+    @Column(length = 64)
+    private String bus;
+
     @PrePersist
     protected void onCreate() {
         purchaseDate = LocalDateTime.now();

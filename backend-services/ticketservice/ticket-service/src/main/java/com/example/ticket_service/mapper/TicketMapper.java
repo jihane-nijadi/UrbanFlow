@@ -34,6 +34,7 @@ public class TicketMapper {
                 .validUntil(ticket.getValidUntil())
                 .qrCode(ticket.getQrCode())
                 .paymentUrl(paymentUrl)
+                .bus(ticket.getBus())
                 .build();
     }
 }

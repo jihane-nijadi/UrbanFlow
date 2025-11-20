@@ -114,6 +114,11 @@ public class TicketController {
                         .departureStop(payload.getDepartureStop())
                         .arrivalStop(payload.getArrivalStop());
 
+                    // Include bus identifier if provided
+                    if (payload.getBus() != null) {
+                        reqBuilder.bus(payload.getBus());
+                    }
+
                     // If the frontend sent a non-numeric routeId (e.g. a code like "BUS-001|09:30|mock"), keep it
                     // as routeCode so service can use it as a descriptive route name instead of failing.
                     if (routeId == null && payload.getRouteId() != null) {

@@ -24,4 +24,6 @@ public class TicketRequest {
     // Optional descriptive fields provided by the frontend when route service data is not available
     private String departureStop;
     private String arrivalStop;
+    // Bus identifier selected by the user (string to support codes like "001" or labels)
+    private String bus;
 }

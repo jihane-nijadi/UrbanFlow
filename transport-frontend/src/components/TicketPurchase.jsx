@@ -5,14 +5,7 @@ import ticketService from '../api/ticketService';
 import paymentService from '../api/paymentService';
 import geolocationService from '../api/geolocationService';
 import '../styles/App.css';
-
-// keep fakeResults as fallback if services are unavailable
-
-const fakeResults = [
-  { id: 'r1', bus: 'Express 12', from: 'Central Station', to: 'Airport', departure: '2025-11-19T08:30:00', arrival: '2025-11-19T09:10:00', price: 4.5, seats: 12 },
-  { id: 'r2', bus: 'Ligne 5', from: 'Main Street', to: 'Université', departure: '2025-11-19T09:00:00', arrival: '2025-11-19T09:40:00', price: 2.0, seats: 5 },
-  { id: 'r3', bus: 'InterCity', from: 'East Terminal', to: 'City B', departure: '2025-11-19T14:00:00', arrival: '2025-11-19T15:45:00', price: 6.25, seats: 20 }
-];
+import { fakeResults } from '../data/fakeResults';
 
 export default function TicketPurchase() {
   const [from, setFrom] = useState('');
@@ -208,6 +201,11 @@ export default function TicketPurchase() {
         price: (7 * (quantity || 1)),
         passengerEmail: user.email || 'demo@example.com'
       };
+
+      // include bus info so payment sessions/tickets can display the chosen bus number
+      try {
+        payload.bus = route.bus || formatDisplayId(route) || (route.raw && (route.raw.bus || route.raw.busId)) || null;
+      } catch (e) { payload.bus = null; }
 
       // Create a payment session in payment-service instead of creating the ticket immediately
       // payment-service will create the actual ticket only after payment is completed

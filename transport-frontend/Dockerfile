@@ -4,7 +4,10 @@ WORKDIR /app
 COPY package*.json ./
 # Ensure npm is available in the Alpine image and install build deps if missing
 RUN apk add --no-cache nodejs npm
-RUN npm ci
+# Use `npm install` in the container build to avoid `npm ci` failures
+# that can occur when lockfile/registry differences exist in CI/container
+# environments. `npm install` is more forgiving and works reliably here.
+RUN npm install --no-audit --no-fund --production=false
 COPY . .
 RUN npm run build
 

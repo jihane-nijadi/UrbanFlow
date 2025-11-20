@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import GeolocationMockSuggestions from '../components/GeolocationMockSuggestions';
 import ticketService from '../api/ticketService';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import paymentService from '../api/paymentService';
 
 export default function MyTickets() {
@@ -14,10 +14,13 @@ export default function MyTickets() {
   const [rawDebug, setRawDebug] = useState({ sessions: null, tickets: null });
   const [showRawDebug, setShowRawDebug] = useState(false);
   const [frontendDeleted, setFrontendDeleted] = useState(false);
+  const [showChangeModal, setShowChangeModal] = useState(false);
+  const [changeModalTicket, setChangeModalTicket] = useState(null);
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   // payment-service stores sessions under the user's email in our setup; prefer email
   const userId = user && (user.email || user.id || user.userId || user._id);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let mounted = true;
@@ -231,20 +234,48 @@ export default function MyTickets() {
       alert('Impossible de générer le PDF du ticket');
     }
   };
-        const amount = (res && (res.amount || res.price)) || payload.price || 7;
-        if (!sessionId) {
-          alert('Impossible de créer la session de paiement — réessayez plus tard.');
-          return;
-        }
-        // Navigate to the PaymentDashboard which listens to ?session= query
-        navigate(`/payment?session=${encodeURIComponent(sessionId)}&amount=${encodeURIComponent(String(amount))}`);
-      } catch (e) {
-        console.error('Failed to confirm change', e);
-        alert('Échec de la tentative de changement');
-      } finally {
-        setProcessingId(null);
+
+  // Frontend-only delete (remove from display only)
+  const doDelete = (ticketId) => {
+    if (!window.confirm("est-ce que vous etes sur de vouloir supprimer ce ticket")) return;
+    setTickets(prev => prev.filter(t => !(String(t.id) === String(ticketId) || String(t.ticketId) === String(ticketId))));
+    setFrontendDeleted(true);
+  };
+
+  // Open change modal for a given ticket
+  const doChange = (ticket) => {
+    setChangeModalTicket(ticket);
+    setShowChangeModal(true);
+  };
+
+  // Confirm a change suggestion: create a payment session then navigate
+  const confirmChange = async (suggestion) => {
+    // suggestion contains the selected replacement option from GeolocationMockSuggestions
+    setProcessingId(changeModalTicket ? (changeModalTicket.id || changeModalTicket.ticketId) : null);
+    try {
+      // Build a minimal payload for payment session creation. Adapt as needed for your backend.
+      const payload = {
+        price: suggestion && (suggestion.price || suggestion.amount) ? (suggestion.price || suggestion.amount) : 7,
+        currency: 'MAD',
+        metadata: JSON.stringify({ originalTicketId: changeModalTicket ? (changeModalTicket.id || changeModalTicket.ticketId) : null, suggestion }),
+      };
+      const res = await paymentService.createSession(payload);
+      const sessionId = res && (res.sessionId || res.id || res.session || res.paymentSessionId);
+      const amount = (res && (res.amount || res.price)) || payload.price || 7;
+      if (!sessionId) {
+        alert('Impossible de créer la session de paiement — réessayez plus tard.');
+        return;
       }
-    })();
+      setShowChangeModal(false);
+      setChangeModalTicket(null);
+      // Navigate to the PaymentDashboard which listens to ?session= query
+      navigate(`/payment?session=${encodeURIComponent(sessionId)}&amount=${encodeURIComponent(String(amount))}`);
+    } catch (e) {
+      console.error('Failed to confirm change', e);
+      alert('Échec de la tentative de changement');
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const formatDate = (iso) => {
@@ -337,62 +368,6 @@ export default function MyTickets() {
     }
   };
 
-  // Generate a printable ticket view and trigger print dialog (user can save as PDF)
-  const generateTicketPdf = (ticket) => {
-    try {
-      const id = ticket.id || ticket.ticketId || '';
-      const title = (ticket._computed && ticket._computed.title) || ticket.routeName || ticket.routeCode || ticket.bus || '';
-      const bus = (ticket._computed && ticket._computed.busNumber) || ticket.bus || (ticket.raw && ticket.raw.bus) || '';
-      const from = ticket.departureStop || ticket.from || (ticket._paymentSession && (ticket._paymentSession.metadata && JSON.parse(ticket._paymentSession.metadata).departureStop)) || '';
-      const to = ticket.arrivalStop || ticket.to || (ticket._paymentSession && (ticket._paymentSession.metadata && JSON.parse(ticket._paymentSession.metadata).arrivalStop)) || '';
-      const departure = (ticket._computed && ticket._computed.departureDisplay) || ticket.departureTime || ticket.departure || '';
-      const arrival = (ticket._computed && ticket._computed.arrivalDisplay) || ticket.arrivalTime || ticket.arrival || '';
-      const price = ticket.price || ticket.amount || 7;
-      const purchaseDate = ticket.purchaseDate || ticket.createdAt || (ticket._paymentSession && (ticket._paymentSession.createdAt || ticket._paymentSession.created_at)) || '';
-
-      const content = `
-        <html>
-          <head>
-            <title>Ticket ${id}</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 24px; color: #111827 }
-              .ticket { border: 1px solid #e5e7eb; padding: 18px; border-radius: 8px; max-width: 720px }
-              .bus { font-weight: 900; font-size: 20px }
-              .route { color: #374151; margin-top: 8px }
-              .price { font-weight: 800; font-size: 18px; margin-top: 8px }
-              .meta { color: #6b7280; margin-top: 8px }
-            </style>
-          </head>
-          <body>
-            <div class="ticket">
-              <div class="bus">${bus}</div>
-              <div class="route">${from} → ${to}</div>
-              <div class="price">${Number(price).toFixed(2)} DH</div>
-              <div class="meta">( ${Number(price).toFixed(2)} DH )</div>
-              <div class="meta">Départ : ${formatDate(departure)} · Arrivée : ${formatDate(arrival)}</div>
-              ${purchaseDate ? `<div class="meta">Acheté le: ${formatDate(purchaseDate)}</div>` : ''}
-              <div style="margin-top:16px;font-size:12px;color:#9ca3af">Ticket ID: ${id}</div>
-            </div>
-          </body>
-        </html>
-      `;
-
-      const w = window.open('', '_blank');
-      if (!w) {
-        alert('Impossible d\u2019ouvrir la fenêtre d\u2019impression — autorisez les popups.');
-        return;
-      }
-      w.document.write(content);
-      w.document.close();
-      // Wait for content to render then print
-      setTimeout(() => {
-        try { w.focus(); w.print(); w.close(); } catch (e) { /* ignore */ }
-      }, 500);
-    } catch (e) {
-      console.error('Failed to generate ticket PDF', e);
-      alert('Impossible de générer le PDF du ticket');
-    }
-  };
 
   return (
     <div className="card" style={{ maxWidth: 1100, margin: '0 auto' }}>

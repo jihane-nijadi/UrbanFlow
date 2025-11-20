@@ -1,0 +1,15 @@
+{
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "name": "user-service",
+            "image": "ton_image_existant:tag",
+            "imagePullPolicy": "IfNotPresent"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transport-frontend
+  namespace: urbanflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: transport-frontend
+  template:
+    metadata:
+      labels:
+        app: transport-frontend
+    spec:
+      containers:
+      - name: transport-frontend
+        image: node:18-alpine   # ← placeholder: remplace par ton image frontend quand disponible
+        ports:
+        - containerPort: 80

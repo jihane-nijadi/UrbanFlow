@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geolocation-service
+  namespace: urbanflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: geolocation-service
+  template:
+    metadata:
+      labels:
+        app: geolocation-service
+    spec:
+      containers:
+      - name: geolocation-service
+        image: urbanflow-geolocation-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8091
+        env:
+        - name: EXTERNAL_API_ENABLE_MOCK
+          value: "true"
+        - name: EXTERNAL_API_POLL_INTERVAL_MS
+          value: "5000"

@@ -1,0 +1,16 @@
+paths:
+  - pattern: "/api/payment/create-session"
+    roles: ["PASSENGER"]
+    authenticated: true
+    methods: ["POST"]
+
+  - pattern: "/api/payment/webhook"
+    authenticated: false
+    methods: ["POST"]
+
+  - pattern: "/api/test"
+    authenticated: false
+    methods: ["GET"]
+
+  - pattern: "/**"
+    authenticated: true

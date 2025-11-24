@@ -1,0 +1,15 @@
+paths:
+  - pattern: "/api/geolocation/public/**"
+    authenticated: false
+    methods: ["GET"]
+
+  - pattern: "/api/geolocation/**"
+    roles: ["PASSENGER"]
+    authenticated: true
+
+  - pattern: "/api/test"
+    authenticated: false
+    methods: ["GET"]
+
+  - pattern: "/**"
+    authenticated: true

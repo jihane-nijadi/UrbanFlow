@@ -1,3 +1,4 @@
+````markdown
 # UrbanFlow 🚌
 
 **Modern Urban Transport Management System - Microservices Architecture**
@@ -11,7 +12,6 @@ UrbanFlow is a comprehensive urban transport management system built with a micr
 - 📅 Subscription management
 - 🔔 Real-time notifications for delays/cancellations
 
----
 
 ## 🏗️ Architecture
 
@@ -145,13 +145,13 @@ npm start
 | Service | Port |
 |---------|------|
 | API Gateway | 8080 |
-| User Service | 8081 |
+| Route Service | 8081 |
 | Ticket Service | 8082 |
-| Route Service | 8083 |
-| Geolocation Service | 8084 |
-| Subscription Service | 8085 |
-| Notification Service | 8086 |
-| Frontend | 3000 |
+| User Service | 8083 |
+| Payment Service | 8085 |
+| Geolocation Service | 8091 |
+| Frontend (dev) | 3000 |
+| Frontend (nginx container) | 80 |
 | RabbitMQ Management | 15672 |
 | Prometheus | 9090 |
 | Grafana | 3001 |
@@ -233,4 +233,7 @@ mvn verify -P integration-tests
 ## 📄 License
 
 This project is part of an academic microservices architecture study.
+
+````
+
 

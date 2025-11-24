@@ -1,0 +1,14 @@
+paths:
+  - pattern: "/api/routes/**"
+    roles: ["PASSENGER"]
+    authenticated: true
+    methods: ["GET","POST","PUT","DELETE"]
+
+  # Public health/test endpoint
+  - pattern: "/api/test"
+    authenticated: false
+    methods: ["GET"]
+
+  # Default: require authentication
+  - pattern: "/**"
+    authenticated: true

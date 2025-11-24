@@ -1,0 +1,21 @@
+paths:
+  - pattern: "/api/tickets/purchase"
+    roles: ["PASSENGER"]
+    authenticated: true
+    methods: ["POST"]
+
+  - pattern: "/api/tickets/my"
+    roles: ["PASSENGER"]
+    authenticated: true
+    methods: ["GET"]
+
+  - pattern: "/api/tickets/admin/**"
+    roles: ["PASSENGER"]
+    authenticated: true
+
+  - pattern: "/api/test"
+    authenticated: false
+    methods: ["GET"]
+
+  - pattern: "/**"
+    authenticated: true

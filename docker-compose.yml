@@ -76,10 +76,8 @@ services:
     container_name: urbanflow-geolocation-service
     environment:
       SPRING_APPLICATION_NAME: geolocation-service
-      # Expose mock data by default for local dev; set to false when using external APIs
       EXTERNAL_API_ENABLE_MOCK: "true"
       EXTERNAL_API_POLL_INTERVAL_MS: 5000
-      # Optional: enable persistence and datasource for geolocation service
       GEOLOCATION_PERSISTENCE_ENABLED: "true"
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL_GEOLOCATION}
       SPRING_DATASOURCE_USERNAME: ${GEOLOCATION_DB_USER}
@@ -211,6 +209,32 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-gateway:
+    build:
+      context: ./backend-services/api-gateway
+      dockerfile: Dockerfile
+    container_name: urbanflow-api-gateway
+    environment:
+      SPRING_APPLICATION_NAME: api-gateway
+      SPRING_RABBITMQ_HOST: ${SPRING_RABBITMQ_HOST}
+    ports:
+      - "8080:8080"
+    depends_on:
+      route-service:
+        condition: service_healthy
+      ticket-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      geolocation-service:
+        condition: service_healthy
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
       interval: 10s

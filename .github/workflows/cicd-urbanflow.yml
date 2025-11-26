@@ -2,9 +2,9 @@ name: CI/CD - UrbanFlow to EKS
 
 on:
   push:
-    branches: [ dodo ]
+    branches: [ dodo , JIJI5 ]
   pull_request:
-    branches: [ dodo ]
+    branches: [ dodo , JIJI5 ]
   workflow_dispatch:
 
 jobs:

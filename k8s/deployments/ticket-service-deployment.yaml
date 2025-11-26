@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticket-service
+  namespace: urbanflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ticket-service
+  template:
+    metadata:
+      labels:
+        app: ticket-service
+    spec:
+      containers:
+      - name: ticket-service
+        image: 564323392327.dkr.ecr.us-east-1.amazonaws.com/urbanflow-ticket-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8082
+        env:
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: TICKET_DB_URL
+        - name: SPRING_DATASOURCE_USERNAME
+          value: postgres
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: POSTGRES_PASSWORD
+        - name: SPRING_RABBITMQ_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPRING_RABBITMQ_HOST
+        - name: ROUTE_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: ROUTE_SERVICE_URL
+
+

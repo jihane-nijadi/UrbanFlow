@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-db
+  namespace: urbanflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-db
+  template:
+    metadata:
+      labels:
+        app: user-db
+    spec:
+      containers:
+      - name: user-db
+        image: postgres:15-alpine
+        imagePullPolicy: Always
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          value: transport_db
+        ports:
+        - containerPort: 5432
+        readinessProbe:
+          exec:
+            command: ["pg_isready", "-U", "postgres"]
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+

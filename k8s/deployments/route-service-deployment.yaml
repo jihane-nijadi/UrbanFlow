@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: route-service
+  namespace: urbanflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: route-service
+  template:
+    metadata:
+      labels:
+        app: route-service
+    spec:
+      containers:
+      - name: route-service
+        image: 564323392327.dkr.ecr.us-east-1.amazonaws.com/urbanflow-route-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8081
+        env:
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: ROUTE_DB_URL
+        - name: SPRING_DATASOURCE_USERNAME
+          value: postgres
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: POSTGRES_PASSWORD
+        - name: GEOLOCATION_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: GEOLOCATION_SERVICE_URL
+        - name: SPRING_RABBITMQ_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPRING_RABBITMQ_HOST
+
+

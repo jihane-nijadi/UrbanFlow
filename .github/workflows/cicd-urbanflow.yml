@@ -1,0 +1,103 @@
+name: CI/CD - UrbanFlow to EKS
+
+on:
+  push:
+    branches: [ dodo ]
+  pull_request:
+    branches: [ dodo ]
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    name: Build & Push Images to ECR
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: api-gateway
+            context: backend-services/api-gateway
+            image: urbanflow-api-gateway
+          - name: user-service
+            context: backend-services/user-service
+            image: urbanflow-user-service
+          - name: payment-service
+            context: backend-services/payment-service
+            image: urbanflow-payment-service
+          - name: ticket-service
+            context: backend-services/ticketservice/ticket-service
+            image: urbanflow-ticket-service
+          - name: route-service
+            context: backend-services/route-service
+            image: urbanflow-route-service
+          - name: geolocation-service
+            context: backend-services/geolocation-service
+            image: urbanflow-geolocation-service
+          - name: transport-frontend
+            context: transport-frontend
+            image: urbanflow-frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push ${{ matrix.service.name }}
+        working-directory: ${{ matrix.service.context }}
+        env:
+          IMAGE_REPO: ${{ vars.ECR_REGISTRY }}/${{ matrix.service.image }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t "$IMAGE_REPO:$IMAGE_TAG" -t "$IMAGE_REPO:latest" .
+          docker push "$IMAGE_REPO:$IMAGE_TAG"
+          docker push "$IMAGE_REPO:latest"
+
+  deploy:
+    name: Deploy to EKS
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    if: github.ref == 'refs/heads/dodo'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: "latest"
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig \
+            --name "${{ vars.EKS_CLUSTER_NAME }}" \
+            --region "${{ vars.AWS_REGION }}"
+
+      - name: Apply Kubernetes manifests (kustomize)
+        run: |
+          kubectl apply -k k8s
+
+      - name: Show rollout status
+        run: |
+          kubectl get pods -n urbanflow
+
+

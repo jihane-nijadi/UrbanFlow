@@ -1,0 +1,41 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - secret-db.yaml
+  - app-config.yaml
+
+  # PostgreSQL databases
+  - deployments/postgres-user-db-deployment.yaml
+  - services/postgres-user-db-service.yaml
+  - deployments/postgres-ticket-db-deployment.yaml
+  - services/postgres-ticket-db-service.yaml
+  - deployments/postgres-route-db-deployment.yaml
+  - services/postgres-route-db-service.yaml
+  - deployments/postgres-geolocation-db-deployment.yaml
+  - services/postgres-geolocation-db-service.yaml
+
+  # Messaging
+  - deployments/rabbitmq-deployment.yaml
+  - services/rabbitmq-service.yaml
+
+  # Backend services
+  - deployments/user-service-deployment.yaml
+  - services/user-service-service.yaml
+  - deployments/ticket-service-deployment.yaml
+  - services/ticket-service-service.yaml
+  - deployments/route-service-deployment.yaml
+  - services/route-service-service.yaml
+  - deployments/geolocation-service-deployment.yaml
+  - services/geolocation-service-service.yaml
+  - deployments/payment-service-deployment.yaml
+  - services/payment-service-service.yaml
+
+  # API gateway
+  - deployments/api-gateway-deployment.yaml
+  - services/api-gateway-service.yaml
+
+  # Frontend
+  - deployments/transport-frontend-deployment.yaml
+  - services/transport-frontend-service.yaml

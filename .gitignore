@@ -25,3 +25,9 @@ Thumbs.db
 # Environment
 .env
 .env.local
+
+# Kubernetes Secrets - DO NOT COMMIT
+k8s/base/secrets.yaml
+k8s/secret-db.yaml
+secrets.env
+k8s/backup-original-configs/

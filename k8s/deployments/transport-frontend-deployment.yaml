@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transport-frontend
+  namespace: urbanflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: transport-frontend
+  template:
+    metadata:
+      labels:
+        app: transport-frontend
+    spec:
+      containers:
+      - name: transport-frontend
+        image: 564323392327.dkr.ecr.us-east-1.amazonaws.com/urbanflow-frontend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+
+

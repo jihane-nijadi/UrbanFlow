@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: urbanflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+      - name: payment-service
+        image: 564323392327.dkr.ecr.us-east-1.amazonaws.com/urbanflow-payment-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8085
+        env:
+        - name: SPRING_RABBITMQ_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPRING_RABBITMQ_HOST
+
+

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: urbanflow
+data:
+  # Database connection URLs (non-sensitive)
+  USER_DB_URL: "jdbc:postgresql://user-db:5432/transport_db"
+  ROUTE_DB_URL: "jdbc:postgresql://route-db:5432/route_db"
+  TICKET_DB_URL: "jdbc:postgresql://ticket-db:5432/ticket_db"
+  GEOLOCATION_DB_URL: "jdbc:postgresql://geolocation-db:5432/geolocation_db"
+
+  # Internal service URLs
+  GEOLOCATION_SERVICE_URL: "http://geolocation-service:8091"
+  ROUTE_SERVICE_URL: "http://route-service:8081"
+
+  # Messaging
+  SPRING_RABBITMQ_HOST: "rabbitmq"
+
+

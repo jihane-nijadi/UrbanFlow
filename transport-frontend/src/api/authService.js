@@ -1,9 +1,20 @@
 // Determine backend base URL depending on environment:
-// - Local dev (running `npm start`): frontend served from localhost, backend likely at localhost:8083
-// - Docker compose: frontend container will resolve `user-service` hostname on the same Docker network
+// - Local dev (running `npm start`): call Spring Boot directly on localhost:8083
+// - In Docker/Kubernetes/production: use relative `/api` so Nginx in the frontend
+//   container can proxy to the correct backend service.
 const host = window.location.hostname;
-const API_HOST = host === "localhost" || host === "127.0.0.1" ? "http://localhost:8083" : "http://user-service:8083";
-const API_URL = (process.env.REACT_APP_API_URL || API_HOST) + "/api";
+
+let API_BASE = "/api";
+
+if (process.env.REACT_APP_API_URL) {
+  // Explicit override via env var
+  API_BASE = process.env.REACT_APP_API_URL.replace(/\/$/, "") + "/api";
+} else if (host === "localhost" || host === "127.0.0.1") {
+  // Local development: hit user-service directly
+  API_BASE = "http://localhost:8083/api";
+}
+
+const API_URL = API_BASE;
 
 const authService = {
   register: async (data) => {

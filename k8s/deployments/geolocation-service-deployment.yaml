@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geolocation-service
+  namespace: urbanflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: geolocation-service
+  template:
+    metadata:
+      labels:
+        app: geolocation-service
+    spec:
+      containers:
+      - name: geolocation-service
+        image: 564323392327.dkr.ecr.us-east-1.amazonaws.com/urbanflow-geolocation-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8091
+        env:
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: GEOLOCATION_DB_URL
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: POSTGRES_USER
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: POSTGRES_PASSWORD
+        - name: EXTERNAL_API_ENABLE_MOCK
+          value: "true"
+        - name: EXTERNAL_API_POLL_INTERVAL_MS
+          value: "5000"
+
+

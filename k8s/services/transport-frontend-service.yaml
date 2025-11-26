@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: transport-frontend
+  namespace: urbanflow
+spec:
+  selector:
+    app: transport-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+  type: LoadBalancer
+
+

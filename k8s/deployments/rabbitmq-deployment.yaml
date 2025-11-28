@@ -25,6 +25,13 @@ spec:
         ports:
         - containerPort: 5672
         - containerPort: 15672
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
         readinessProbe:
           exec:
             command: ["rabbitmq-diagnostics", "ping"]

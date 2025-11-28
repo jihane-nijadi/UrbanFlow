@@ -1,4 +1,3 @@
-````markdown
 # UrbanFlow 🚌
 
 **Modern Urban Transport Management System - Microservices Architecture**
@@ -53,18 +52,51 @@ UrbanFlow is a comprehensive urban transport management system built with a micr
 - **JPA/Hibernate** - ORM for database operations
 
 ### DevOps & Infrastructure
-- **Containerization**: Docker
-- **Orchestration**: Kubernetes (K8s)
-- **Cloud Platform**: AWS
-  - EKS (Elastic Kubernetes Service)
-  - RDS (Relational Database Service)
-  - S3 (Storage)
-  - CloudWatch (Logging)
+
+#### Containerization & Orchestration
+- **Docker** - Containerization for all microservices
+- **Kubernetes (K8s)** - Container orchestration and management
+  - Deployments with resource requests/limits
+  - Services (LoadBalancer, ClusterIP)
+  - ConfigMaps and Secrets management
+  - Kustomize for manifest management
+
+#### Infrastructure as Code (IaC)
+- **Terraform** - Infrastructure provisioning and management
+  - AWS Provider (v5.x)
+  - ECR repositories management
+  - VPC with public/private subnets
+  - Multi-AZ deployment support
+
+#### CI/CD Pipeline
+- **GitHub Actions** - Automated CI/CD workflows
+  - Terraform plan/apply for infrastructure
+  - Multi-service Docker build and push
+  - Automated deployment to EKS
+  - Secret management via GitHub Secrets
+- **AWS ECR** - Container registry for Docker images
+- **Kustomize** - Kubernetes manifest management
+
+#### Cloud Platform: AWS
+- **EKS (Elastic Kubernetes Service)** - Managed Kubernetes cluster
+- **ECR (Elastic Container Registry)** - Docker image storage
+- **VPC** - Virtual Private Cloud with public/private subnets
+- **EC2** - Compute instances for EKS nodes
+- **CloudWatch** - Logging and monitoring
 
 ### Monitoring & Observability
-- **Prometheus** - Metrics collection
+- **Prometheus** - Metrics collection and time-series database
+  - kube-prometheus-stack (Helm chart)
+  - ServiceMonitor for application metrics
+  - Node and pod metrics collection
 - **Grafana** - Metrics visualization and dashboards
+  - Pre-configured Kubernetes dashboards
+  - Custom application dashboards
+  - Alerting rules
 - **Spring Boot Actuator** - Health checks and metrics endpoints
+  - `/actuator/health` - Health checks
+  - `/actuator/prometheus` - Prometheus metrics export
+- **Kubernetes Resource Monitoring** - CPU, memory, and pod metrics
 
 ### Testing
 - **Unit Testing**: JUnit 5, Mockito
@@ -80,23 +112,40 @@ UrbanFlow is a comprehensive urban transport management system built with a micr
 
 ```
 UrbanFlow/
-├── api-gateway/              # API Gateway service
-├── user-service/             # User management microservice
-├── ticket-service/           # Ticket purchase microservice
-├── route-service/            # Routes & schedules microservice
-├── geolocation-service/      # Bus tracking microservice
-├── subscription-service/     # Subscription management microservice
-├── notification-service/     # Notifications microservice
-├── frontend/                 # React frontend application
-├── infrastructure/           # Infrastructure as Code
-│   ├── docker/              # Docker compose files
-│   ├── kubernetes/          # K8s manifests
-│   └── terraform/           # AWS infrastructure (optional)
-├── monitoring/              # Prometheus & Grafana configs
+├── backend-services/        # Backend microservices
+│   ├── api-gateway/         # API Gateway service
+│   ├── user-service/        # User management microservice
+│   ├── ticket-service/      # Ticket purchase microservice
+│   ├── route-service/       # Routes & schedules microservice
+│   ├── geolocation-service/ # Bus tracking microservice
+│   └── payment-service/     # Payment processing microservice
+├── transport-frontend/      # React frontend application
+├── k8s/                     # Kubernetes manifests
+│   ├── deployments/         # Deployment configurations
+│   ├── services/            # Service definitions
+│   ├── namespace.yaml       # Namespace configuration
+│   ├── app-config.yaml      # ConfigMap for app configuration
+│   ├── secret-db.yaml       # Database secrets (git-ignored)
+│   └── kustomization.yaml   # Kustomize configuration
+├── infra/                   # Infrastructure as Code
+│   └── terraform/           # Terraform configurations
+│       ├── main.tf          # Main Terraform configuration
+│       ├── providers.tf    # Provider definitions
+│       ├── variables.tf     # Variable definitions
+│       ├── ecr.tf           # ECR repositories
+│       ├── vpc.tf           # VPC and networking
+│       └── outputs.tf       # Output values
+├── monitoring/              # Monitoring configurations
+│   ├── kube-prometheus-values.yaml  # Prometheus Helm values
+│   └── README.md            # Monitoring setup guide
+├── .github/                 # GitHub configurations
+│   ├── workflows/           # GitHub Actions workflows
+│   │   └── cicd-urbanflow.yml  # CI/CD pipeline
+│   ├── SECRETS_AND_VARIABLES.md  # Secrets documentation
+│   └── GITHUB_SECRETS_VARIABLES_VALUES.md  # Values reference
 └── docs/                    # Project documentation
-    ├── architecture/        # Architecture diagrams
-    ├── api/                 # API specifications
-    └── deployment/          # Deployment guides
+    ├── KUBERNETES_DEPLOYMENT.md  # K8s deployment guide
+    └── DOCKER_SETUP.md      # Docker setup guide
 ```
 
 ---
@@ -104,13 +153,19 @@ UrbanFlow/
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Java 17+
-- Node.js 18+
-- Docker & Docker Compose
-- PostgreSQL
-- RabbitMQ
-- Maven
-- kubectl (for Kubernetes)
+
+#### Development
+- **Java 17+** - Backend development
+- **Node.js 18+** - Frontend development
+- **Maven 3.6+** - Java build tool
+- **Docker & Docker Compose** - Container runtime
+
+#### DevOps & Deployment
+- **kubectl** - Kubernetes CLI
+- **Terraform 1.4+** - Infrastructure provisioning
+- **AWS CLI** - AWS service management
+- **Helm 3.x** - Kubernetes package manager
+- **Git** - Version control
 
 ### Local Development Setup
 
@@ -122,25 +177,25 @@ cd UrbanFlow
 
 2. **Start infrastructure services**
 ```bash
-docker-compose -f infrastructure/docker/docker-compose.dev.yml up -d
+docker-compose up -d
 ```
 
 3. **Run microservices** (example for ticket-service)
 ```bash
-cd ticket-service
+cd backend-services/ticketservice/ticket-service
 mvn spring-boot:run
 ```
 
 4. **Run frontend**
 ```bash
-cd frontend
+cd transport-frontend
 npm install
 npm start
 ```
 
 ---
 
-## 📊 Service Ports (Development)
+## 📊 Service Ports
 
 | Service | Port |
 |---------|------|
@@ -150,52 +205,189 @@ npm start
 | User Service | 8083 |
 | Payment Service | 8085 |
 | Geolocation Service | 8091 |
-| Frontend (dev) | 3000 |
-| Frontend (nginx container) | 80 |
+| Frontend | 80 |
+| RabbitMQ | 5672 |
 | RabbitMQ Management | 15672 |
+| PostgreSQL | 5432 |
 | Prometheus | 9090 |
-| Grafana | 3001 |
+| Grafana | 3000 |
 
 ---
 
 ## 🔐 Security
 
-- JWT-based authentication
-- OAuth2 integration (optional)
-- API rate limiting
-- HTTPS in production
-- Database encryption
+### Application Security
+- **JWT-based authentication** - Secure token-based auth
+- **Spring Security** - Authentication and authorization
+- **API rate limiting** - Protection against abuse
+- **HTTPS in production** - Encrypted communication
+- **Database encryption** - Data at rest encryption
+
+### Infrastructure Security
+- **Kubernetes Secrets** - Secure secret management
+  - Secrets stored in GitHub Secrets (not in repository)
+  - `secret-db.yaml` is git-ignored
+- **VPC with Private Subnets** - Network isolation
+- **IAM Roles** - Least privilege access
+- **ECR Image Scanning** - Vulnerability scanning
+- **Resource Limits** - CPU and memory limits on all pods
 
 ---
 
 ## 📦 Deployment
 
-### Docker
+### Docker (Local Development)
 ```bash
 # Build all services
-./build-all.sh
+docker-compose build
 
 # Run with Docker Compose
 docker-compose up -d
+
+# View logs
+docker-compose logs -f
 ```
 
-### Kubernetes (AWS EKS)
+### Infrastructure Provisioning (Terraform)
+
+1. **Initialize Terraform**
 ```bash
-# Apply K8s manifests
-kubectl apply -f infrastructure/kubernetes/
-
-# Check deployments
-kubectl get pods -n urbanflow
+cd infra/terraform
+terraform init
 ```
+
+2. **Plan infrastructure changes**
+```bash
+terraform plan
+```
+
+3. **Apply infrastructure**
+```bash
+terraform apply
+```
+
+This will create:
+- ECR repositories for all services
+- VPC with public/private subnets
+- Networking resources
+
+### Kubernetes Deployment (AWS EKS)
+
+#### Prerequisites
+- EKS cluster created and configured
+- `kubectl` configured for your cluster
+- AWS credentials configured
+
+#### Deploy Application
+
+1. **Configure kubectl for EKS**
+```bash
+aws eks update-kubeconfig --name <CLUSTER_NAME> --region us-east-1
+```
+
+2. **Create namespace**
+```bash
+kubectl apply -f k8s/namespace.yaml
+```
+
+3. **Deploy secrets** (from GitHub Secrets in CI/CD, or manually)
+```bash
+kubectl create secret generic db-secrets \
+  --namespace=urbanflow \
+  --from-literal=POSTGRES_USER=postgres \
+  --from-literal=POSTGRES_PASSWORD=<PASSWORD> \
+  --from-literal=JWT_SECRET=<JWT_SECRET> \
+  --from-literal=JWT_EXPIRATION=86400000
+```
+
+4. **Deploy all resources using Kustomize**
+```bash
+kubectl apply -k k8s/
+```
+
+5. **Verify deployment**
+```bash
+kubectl get pods -n urbanflow
+kubectl get services -n urbanflow
+```
+
+### CI/CD Pipeline (GitHub Actions)
+
+The project includes a complete CI/CD pipeline that:
+
+1. **Terraform Stage**
+   - Validates Terraform configuration
+   - Plans infrastructure changes
+   - Applies changes on main branch
+
+2. **Build & Push Stage**
+   - Builds Docker images for all services
+   - Pushes to AWS ECR
+   - Uses matrix strategy for parallel builds
+
+3. **Deploy Stage**
+   - Creates Kubernetes secrets from GitHub Secrets
+   - Applies Kubernetes manifests
+   - Monitors deployment status
+
+**Required GitHub Secrets:**
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `JWT_SECRET`
+- `JWT_EXPIRATION`
+
+**Required GitHub Variables:**
+- `AWS_REGION`
+- `ECR_REGISTRY`
+- `EKS_CLUSTER_NAME`
+
+See `.github/GITHUB_SECRETS_VARIABLES_VALUES.md` for detailed setup instructions.
 
 ---
 
 ## 📈 Monitoring
 
+### Local Development
 Access monitoring dashboards:
 - **Grafana**: http://localhost:3001
 - **Prometheus**: http://localhost:9090
 - **RabbitMQ Management**: http://localhost:15672
+
+### Production (EKS)
+
+#### Install Monitoring Stack
+```bash
+# Create monitoring namespace
+kubectl create namespace monitoring
+
+# Add Prometheus Helm repository
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+# Install kube-prometheus-stack
+helm upgrade --install kube-prometheus-stack \
+  prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  -f monitoring/kube-prometheus-values.yaml \
+  --set grafana.adminPassword="<YOUR_PASSWORD>"
+```
+
+#### Access Monitoring Dashboards
+```bash
+# Get Grafana LoadBalancer URL
+kubectl get svc -n monitoring grafana
+
+# Port-forward for local access
+kubectl port-forward -n monitoring svc/grafana 3000:80
+```
+
+**Default Credentials:**
+- Username: `admin`
+- Password: (set during installation)
+
+See `monitoring/README.md` for detailed monitoring setup guide.
 
 ---
 
@@ -216,24 +408,57 @@ mvn verify -P integration-tests
 ## 📝 Project Phases
 
 - [x] **Phase 1**: Architecture & Design
-- [ ] **Phase 2**: Implementation
-- [ ] **Phase 3**: Testing
-- [ ] **Phase 4**: Deployment
-- [ ] **Phase 5**: Documentation
+- [x] **Phase 2**: Implementation
+- [x] **Phase 3**: Testing
+- [x] **Phase 4**: Deployment
+  - [x] Docker containerization
+  - [x] Kubernetes manifests
+  - [x] Terraform infrastructure
+  - [x] CI/CD pipeline
+  - [x] Monitoring setup
+- [x] **Phase 5**: Documentation
 
 ---
+
+## 🛠️ DevOps Tools & Technologies Summary
+
+### Infrastructure & Orchestration
+- **Kubernetes** - Container orchestration with resource management
+- **Terraform** - Infrastructure as Code (ECR, VPC, networking)
+- **AWS EKS** - Managed Kubernetes service
+- **AWS ECR** - Container registry
+- **Kustomize** - Kubernetes manifest management
+
+### CI/CD
+- **GitHub Actions** - Automated CI/CD workflows
+- **Docker** - Containerization
+- **Multi-stage builds** - Optimized Docker images
+
+### Monitoring & Observability
+- **Prometheus** - Metrics collection
+- **Grafana** - Visualization and dashboards
+- **kube-prometheus-stack** - Complete monitoring solution
+- **Spring Boot Actuator** - Application metrics
+
+### Resource Management
+- **Kubernetes Resource Requests/Limits** - CPU and memory management
+- **Horizontal Pod Autoscaling** - (Can be configured)
+- **Namespace isolation** - Resource organization
+
+### Security & Secrets
+- **GitHub Secrets** - Secure secret storage
+- **Kubernetes Secrets** - Runtime secret management
+- **Git ignore** - Prevents secret file commits
 
 ## 👥 Team
 
 - **Repository**: [UrbanFlow](https://github.com/jihaneeee/UrbanFlow)
-- **Branch**: main
+- **Branch**: `dodo` (main development branch)
 
 ---
 
 ## 📄 License
 
 This project is part of an academic microservices architecture study.
-
-````
 
 

@@ -19,6 +19,13 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
         env:
         # Disable Eureka client in Kubernetes to avoid localhost:8761 errors
         - name: EUREKA_CLIENT_ENABLED

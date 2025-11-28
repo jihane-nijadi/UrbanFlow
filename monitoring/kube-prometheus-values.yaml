@@ -1,0 +1,49 @@
+grafana:
+  enabled: true
+  service:
+    type: LoadBalancer
+  ingress:
+    enabled: false
+  adminUser: admin
+  # Do NOT hardcode a real password here; override via --set grafana.adminPassword=...
+  adminPassword: "CHANGE_ME_IN_HELM_CMD"
+  defaultDashboardsEnabled: true
+
+prometheus:
+  enabled: true
+  service:
+    type: ClusterIP
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+
+alertmanager:
+  enabled: true
+
+## Scrape Kubernetes cluster components and pods
+##
+coreDns:
+  enabled: true
+
+kubeApiServer:
+  enabled: true
+
+kubeControllerManager:
+  enabled: true
+
+kubeScheduler:
+  enabled: true
+
+kubeProxy:
+  enabled: true
+
+kubeEtcd:
+  enabled: true
+
+kube-state-metrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
+
+

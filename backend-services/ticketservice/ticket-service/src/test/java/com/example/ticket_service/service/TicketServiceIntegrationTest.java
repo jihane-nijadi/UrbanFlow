@@ -249,37 +249,43 @@ class TicketServiceIntegrationTest {
     // ==================== Route/Schedule Validation Tests ====================
 
     @Test
-    @DisplayName("Should throw exception when route not found")
-    void whenCreateTicket_andRouteNotFound_thenThrowException() {
-        // Given
+    @DisplayName("Should create ticket with fallback values when route service is unavailable")
+    void whenCreateTicket_andRouteNotFound_thenCreateTicketWithFallback() {
+        // Given - Route service throws exception, but service should continue
         when(routeServiceClient.getRouteById(1L))
                 .thenThrow(new RuntimeException("Route service unavailable or route not found"));
+        when(ticketRepository.countByScheduleIdAndTravelDate(anyLong(), any())).thenReturn(0L);
+        when(ticketRepository.save(any(Ticket.class))).thenReturn(mockTicket);
+        when(ticketMapper.toResponse(any(Ticket.class))).thenReturn(mockResponse);
 
-        // When & Then
-        assertThatThrownBy(() -> ticketService.createTicket(validRequest))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Route service unavailable");
+        // When
+        TicketResponse result = ticketService.createTicket(validRequest);
 
+        // Then - Ticket should be created with fallback values
+        assertThat(result).isNotNull();
         verify(routeServiceClient, times(1)).getRouteById(1L);
-        verify(ticketRepository, never()).save(any(Ticket.class));
+        verify(ticketRepository, times(1)).save(any(Ticket.class));
     }
 
     @Test
-    @DisplayName("Should throw exception when schedule not found")
-    void whenCreateTicket_andScheduleNotFound_thenThrowException() {
-        // Given
+    @DisplayName("Should create ticket with fallback values when schedule service is unavailable")
+    void whenCreateTicket_andScheduleNotFound_thenCreateTicketWithFallback() {
+        // Given - Schedule service throws exception, but service should continue
         when(routeServiceClient.getRouteById(1L)).thenReturn(mockRoute);
         when(routeServiceClient.getScheduleById(5L))
                 .thenThrow(new RuntimeException("Route service unavailable or schedule not found"));
+        when(ticketRepository.countByScheduleIdAndTravelDate(anyLong(), any())).thenReturn(0L);
+        when(ticketRepository.save(any(Ticket.class))).thenReturn(mockTicket);
+        when(ticketMapper.toResponse(any(Ticket.class))).thenReturn(mockResponse);
 
-        // When & Then
-        assertThatThrownBy(() -> ticketService.createTicket(validRequest))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Route service unavailable");
+        // When
+        TicketResponse result = ticketService.createTicket(validRequest);
 
+        // Then - Ticket should be created with fallback values
+        assertThat(result).isNotNull();
         verify(routeServiceClient, times(1)).getRouteById(1L);
         verify(routeServiceClient, times(1)).getScheduleById(5L);
-        verify(ticketRepository, never()).save(any(Ticket.class));
+        verify(ticketRepository, times(1)).save(any(Ticket.class));
     }
 
     @Test

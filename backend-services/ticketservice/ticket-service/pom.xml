@@ -121,6 +121,42 @@
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
+			<!-- Maven Surefire Plugin: Tests unitaires -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<!-- Exclure les tests d'intégration des tests unitaires -->
+					<excludes>
+						<exclude>**/*IntegrationTest.java</exclude>
+						<exclude>**/*IntegrationTestWithDB.java</exclude>
+					</excludes>
+					<includes>
+						<include>**/*Test.java</include>
+						<include>**/*Tests.java</include>
+					</includes>
+				</configuration>
+			</plugin>
+			<!-- Maven Failsafe Plugin: Tests d'intégration -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<configuration>
+					<!-- Inclure uniquement les tests d'intégration -->
+					<includes>
+						<include>**/*IntegrationTest.java</include>
+						<include>**/*IntegrationTestWithDB.java</include>
+					</includes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>

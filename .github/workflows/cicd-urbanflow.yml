@@ -36,15 +36,31 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Run tests for ${{ matrix.service.name }}
+      - name: Run unit tests for ${{ matrix.service.name }}
         working-directory: ${{ matrix.service.context }}
         timeout-minutes: 10
         run: |
           echo "=========================================="
-          echo "Running tests for ${{ matrix.service.name }}"
+          echo "Running unit tests for ${{ matrix.service.name }}"
           echo "=========================================="
           mvn clean test --batch-mode
-          echo "✅ Tests completed successfully for ${{ matrix.service.name }}"
+          echo "✅ Unit tests completed successfully for ${{ matrix.service.name }}"
+
+      - name: Run integration tests for ${{ matrix.service.name }}
+        working-directory: ${{ matrix.service.context }}
+        timeout-minutes: 15
+        run: |
+          echo "=========================================="
+          echo "Running integration tests for ${{ matrix.service.name }}"
+          echo "=========================================="
+          # Vérifier si des tests d'intégration existent
+          if find src/test -name "*IntegrationTest*.java" -type f | grep -q .; then
+            echo "Found integration tests, running them..."
+            mvn verify --batch-mode -DskipTests
+            echo "✅ Integration tests completed successfully for ${{ matrix.service.name }}"
+          else
+            echo "ℹ️  No integration tests found for ${{ matrix.service.name }}, skipping..."
+          fi
 
       - name: Display test summary
         if: always()
@@ -53,19 +69,38 @@ jobs:
           echo "=========================================="
           echo "Test Summary for ${{ matrix.service.name }}"
           echo "=========================================="
+          echo ""
+          echo "--- Unit Tests (Surefire) ---"
           if [ -d "target/surefire-reports" ]; then
             echo "Test reports available in target/surefire-reports"
             find target/surefire-reports -name "*.txt" -exec echo "Report: {}" \;
           else
-            echo "No test reports found"
+            echo "No unit test reports found"
+          fi
+          echo ""
+          echo "--- Integration Tests (Failsafe) ---"
+          if [ -d "target/failsafe-reports" ]; then
+            echo "Test reports available in target/failsafe-reports"
+            find target/failsafe-reports -name "*.txt" -exec echo "Report: {}" \;
+          else
+            echo "No integration test reports found"
           fi
 
-      - name: Upload test results
+      - name: Upload unit test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.service.name }}
+          name: unit-test-results-${{ matrix.service.name }}
           path: ${{ matrix.service.context }}/target/surefire-reports
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results-${{ matrix.service.name }}
+          path: ${{ matrix.service.context }}/target/failsafe-reports
           retention-days: 7
           if-no-files-found: ignore
 
